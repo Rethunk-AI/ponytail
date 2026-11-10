@@ -8,5 +8,11 @@
     "pi-extension/test/**/*.test.ts",
     ".opencode/plugins/*.ts"
   ],
-  "project": ["hooks/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts", "pi-extension/**/*.ts", ".opencode/**/*.ts"]
+  "project": [
+    "hooks/**/*.ts",
+    "scripts/**/*.ts",
+    "tests/**/*.ts",
+    "pi-extension/**/*.ts",
+    ".opencode/**/*.ts"
+  ]
 }

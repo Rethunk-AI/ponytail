@@ -27,10 +27,10 @@ claude plugin install ponytail@rethunk-ponytail
 
 Default level: `PONYTAIL_DEFAULT_MODE` (`off|lite|full|ultra`) or `~/.config/ponytail/config.json`
 with `{"defaultMode": "lite"}`. To clean up state ponytail writes outside the plugin folder, run
-`node scripts/uninstall.js` before removing the plugin.
+`bun scripts/uninstall.ts` before removing the plugin.
 
 ## Upkeep
 
 `upstream` is DietrichGebert/ponytail. Merge upstream changes that touch the kept parts; the gate
-is `.github/workflows/test.yml` (`node scripts/check-rule-copies.js`, `node scripts/check-versions.js`,
-`npm test`).
+is `.github/workflows/test.yml` (`bun scripts/check-rule-copies.ts`, `bun scripts/check-versions.ts`,
+`bun test`); `bun run ci` runs it all with lint, typecheck and knip.

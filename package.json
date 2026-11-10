@@ -24,10 +24,10 @@
   "bugs": {
     "url": "https://github.com/Rethunk-AI/ponytail/issues"
   },
-  "main": "./.opencode/plugins/ponytail.mjs",
+  "main": "./.opencode/plugins/ponytail.ts",
   "exports": {
-    ".": "./.opencode/plugins/ponytail.mjs",
-    "./plugin": "./.opencode/plugins/ponytail.mjs"
+    ".": "./.opencode/plugins/ponytail.ts",
+    "./plugin": "./.opencode/plugins/ponytail.ts"
   },
   "files": [
     "AGENTS.md",
@@ -38,8 +38,8 @@
     ".qoder-plugin/",
     "pi-extension/",
     "!pi-extension/test/",
-    "scripts/uninstall.js",
-    "scripts/cursor-hooks.js",
+    "scripts/uninstall.ts",
+    "scripts/cursor-hooks.ts",
     "LICENSE"
   ],
   "scripts": {
@@ -54,7 +54,7 @@
   },
   "pi": {
     "extensions": [
-      "./pi-extension/index.js"
+      "./pi-extension/index.ts"
     ],
     "skills": [
       "./skills"

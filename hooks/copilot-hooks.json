@@ -4,16 +4,16 @@
     "sessionStart": [
       {
         "type": "command",
-        "bash": "node -e \"require(require('path').join(process.env.PLUGIN_ROOT.split(String.fromCharCode(92)).join('/'), 'hooks/ponytail-activate.js'))\" || exit 0",
-        "powershell": "if (Get-Command node -ErrorAction SilentlyContinue) { node -e \"require(require('path').join(process.env.PLUGIN_ROOT.split(String.fromCharCode(92)).join('/'), 'hooks/ponytail-activate.js'))\" }",
+        "bash": "bun -e \"require(require('path').join(process.env.PLUGIN_ROOT.split(String.fromCharCode(92)).join('/'), 'hooks/ponytail-activate.ts'))\" || exit 0",
+        "powershell": "if (Get-Command bun -ErrorAction SilentlyContinue) { bun -e \"require(require('path').join(process.env.PLUGIN_ROOT.split(String.fromCharCode(92)).join('/'), 'hooks/ponytail-activate.ts'))\" }",
         "timeoutSec": 15
       }
     ],
     "userPromptSubmitted": [
       {
         "type": "command",
-        "bash": "node -e \"require(require('path').join(process.env.PLUGIN_ROOT.split(String.fromCharCode(92)).join('/'), 'hooks/ponytail-mode-tracker.js'))\" || exit 0",
-        "powershell": "if (Get-Command node -ErrorAction SilentlyContinue) { node -e \"require(require('path').join(process.env.PLUGIN_ROOT.split(String.fromCharCode(92)).join('/'), 'hooks/ponytail-mode-tracker.js'))\" }",
+        "bash": "bun -e \"require(require('path').join(process.env.PLUGIN_ROOT.split(String.fromCharCode(92)).join('/'), 'hooks/ponytail-mode-tracker.ts'))\" || exit 0",
+        "powershell": "if (Get-Command bun -ErrorAction SilentlyContinue) { bun -e \"require(require('path').join(process.env.PLUGIN_ROOT.split(String.fromCharCode(92)).join('/'), 'hooks/ponytail-mode-tracker.ts'))\" }",
         "timeoutSec": 15
       }
     ]

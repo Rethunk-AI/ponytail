@@ -50,7 +50,10 @@
     "allowJs": false,
 
     // canon ts-typescript-00015
-    "incremental": true
+    "incremental": true,
+
+    // TS 6+ loads no @types package unless named; Bun supplies the runtime and node: types.
+    "types": ["bun"]
   },
   // Hooks, scripts and host plugins run as TypeScript under Bun; no emit, so tests sit beside them.
   "include": ["hooks", "scripts", "tests", "pi-extension", ".opencode"]

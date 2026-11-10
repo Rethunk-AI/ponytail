@@ -12,7 +12,7 @@ The Claude Code and Codex plugins (and the Cursor hooks) run two tiny Node.js li
 ```
 /plugin install ponytail@rethunk-ponytail
 ```
-(You have to send two separate prompts for the install to work) 
+(You have to send two separate prompts for the install to work)
 
 Same steps in the Claude Code Desktop app's Code tab: type the two `/plugin` commands above into the prompt box, or click the **+** button next to it, choose **Plugins** → **Add plugin** to browse your configured marketplaces, and manage marketplaces from **Customize** in the sidebar.
 
@@ -89,11 +89,11 @@ Run from a checkout instead (the plugin reuses `hooks/` and `skills/`):
 
 Injects the ruleset every turn at the active level; adds the `/ponytail` commands (see [Commands](README.md#commands)). OpenCode also auto-loads this repo's `AGENTS.md`, so the rules hold even without the plugin. The plugin adds the `lite/full/ultra/off` levels.
 
-The `./` path resolves against your project's `opencode.json`; to share one checkout across projects, point it at the absolute path of the checkout's `.opencode/plugins` directory. A `plugins` entry must name a **directory**, not a file: OpenCode 2 rejects a path to `ponytail.mjs` with `configured plugin path must be a directory`. Opening this repo in OpenCode 2 needs no entry at all: it loads `.opencode/plugins/index.js` on its own.
+The `./` path resolves against your project's `opencode.json`; to share one checkout across projects, point it at the absolute path of the checkout's `.opencode/plugins` directory. A `plugins` entry must name a **directory**, not a file: OpenCode 2 rejects a path to `ponytail.mjs` with `configured plugin path must be a directory`. Opening this repo in OpenCode 2 needs no entry at all: it loads `.opencode/plugins/index.ts` on its own.
 
 Kilo Code is built on OpenCode and runs the same plugin through its `plugin` key: add `{ "plugin": ["@dietrichgebert/ponytail"] }` to `kilo.jsonc` (or `~/.config/kilo/kilo.jsonc` for every project).
 
-OpenCode 1 has no `plugin add` and uses the older `plugin` key: `{ "plugin": ["@dietrichgebert/ponytail"] }`, or from a checkout the file path: `{ "plugin": ["./.opencode/plugins/ponytail.mjs"] }`.
+OpenCode 1 has no `plugin add` and uses the older `plugin` key: `{ "plugin": ["@dietrichgebert/ponytail"] }`, or from a checkout the file path: `{ "plugin": ["./.opencode/plugins/ponytail.ts"] }`.
 
 ## Gemini CLI
 
@@ -184,10 +184,10 @@ That imports the six skills as `ponytail:ponytail`, `ponytail:ponytail-review` a
 
 ```bash
 git clone https://github.com/Rethunk-AI/ponytail
-node ponytail/scripts/cursor-hooks.js install
+bun ponytail/scripts/cursor-hooks.ts install
 ```
 
-Merges two native hooks into `~/.cursor/hooks.json` (add `--project` to write `<project>/.cursor/hooks.json` instead) and keeps any hooks you already have there. The entries run `node` from that checkout, so leave it where it is or re-run the install after moving it. Cursor reloads the file on save; open a new chat and the ruleset for your default level arrives through `sessionStart`. Send `/ponytail lite`, `/ponytail full`, `/ponytail ultra` or `/ponytail off` as a plain message to switch the level for the rest of the conversation; `/ponytail` reports it. Cursor's `subagentStart` cannot inject context, so subagents run without the ruleset, and cloud agents never fire `sessionStart`. The always-on rule (`.cursor/rules/ponytail.mdc`) and the hooks are alternatives: while the rule is in a workspace the hooks inject nothing and the mode commands answer with a notice, so delete the rule to let the hooks manage the level. Contract, verification record and limitations: [docs/cursor-hooks.md](docs/cursor-hooks.md). Uninstall: `node ponytail/scripts/cursor-hooks.js uninstall`.
+Merges two native hooks into `~/.cursor/hooks.json` (add `--project` to write `<project>/.cursor/hooks.json` instead) and keeps any hooks you already have there. The entries run `node` from that checkout, so leave it where it is or re-run the install after moving it. Cursor reloads the file on save; open a new chat and the ruleset for your default level arrives through `sessionStart`. Send `/ponytail lite`, `/ponytail full`, `/ponytail ultra` or `/ponytail off` as a plain message to switch the level for the rest of the conversation; `/ponytail` reports it. Cursor's `subagentStart` cannot inject context, so subagents run without the ruleset, and cloud agents never fire `sessionStart`. The always-on rule (`.cursor/rules/ponytail.mdc`) and the hooks are alternatives: while the rule is in a workspace the hooks inject nothing and the mode commands answer with a notice, so delete the rule to let the hooks manage the level. Contract, verification record and limitations: [docs/cursor-hooks.md](docs/cursor-hooks.md). Uninstall: `bun ponytail/scripts/cursor-hooks.ts uninstall`.
 
 ## Settings
 
@@ -223,18 +223,18 @@ Jules (Google) reads `AGENTS.md` from the repository root, which this repo ships
 
 ## Uninstall
 
-| Host | Command |
-|------|---------|
-| Claude Code | `/plugin remove ponytail` |
-| Codex | `codex plugin remove ponytail` |
-| Devin CLI | `devin plugins remove ponytail` |
-| Grok Build | `grok plugin uninstall ponytail` |
-| Pi agent | `pi uninstall ponytail` |
-| Kimi Code | `/plugins` in Kimi Code, then remove ponytail |
-| Skills CLI | `npx skills remove ponytail ponytail-audit ponytail-debt ponytail-gain ponytail-help ponytail-review` (same `--agent` / `--global` flags as the install) |
-| Oh My Pi (omp) | `omp plugin uninstall ponytail@rethunk-ponytail`, then `omp plugin marketplace remove rethunk-ponytail` |
-| OpenCode | `opencode plugin remove @dietrichgebert/ponytail` |
-| Cursor hooks | `node scripts/cursor-hooks.js uninstall` (add `--project` for a project-level install); removes only ponytail's entries from `hooks.json` |
-| Cursor rule / Windsurf / Cline / Qoder / etc. | Delete the copied rule file |
+| Host                                          | Command                                                                                                                                                  |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Claude Code                                   | `/plugin remove ponytail`                                                                                                                                |
+| Codex                                         | `codex plugin remove ponytail`                                                                                                                           |
+| Devin CLI                                     | `devin plugins remove ponytail`                                                                                                                          |
+| Grok Build                                    | `grok plugin uninstall ponytail`                                                                                                                         |
+| Pi agent                                      | `pi uninstall ponytail`                                                                                                                                  |
+| Kimi Code                                     | `/plugins` in Kimi Code, then remove ponytail                                                                                                            |
+| Skills CLI                                    | `npx skills remove ponytail ponytail-audit ponytail-debt ponytail-gain ponytail-help ponytail-review` (same `--agent` / `--global` flags as the install) |
+| Oh My Pi (omp)                                | `omp plugin uninstall ponytail@rethunk-ponytail`, then `omp plugin marketplace remove rethunk-ponytail`                                                  |
+| OpenCode                                      | `opencode plugin remove @dietrichgebert/ponytail`                                                                                                        |
+| Cursor hooks                                  | `bun scripts/cursor-hooks.ts uninstall` (add `--project` for a project-level install); removes only ponytail's entries from `hooks.json`                 |
+| Cursor rule / Windsurf / Cline / Qoder / etc. | Delete the copied rule file                                                                                                                              |
 
-These remove the plugin's own files. They leave behind a small amount of state ponytail writes outside the plugin folder: the mode flag (`~/.claude/.ponytail-active`, or `~/.cursor/.ponytail-active` for Cursor), `~/.config/ponytail/config.json`, and ponytail's entries in `~/.cursor/hooks.json`. Run `node scripts/uninstall.js` to clean those up too. **Run it before the host remove command above**: the script is itself a plugin file, so removing the plugin first deletes it (or run it from a separate clone of this repo). It only removes the statusLine entry if it points at ponytail's own script, so a statusline you set up yourself is left untouched.
+These remove the plugin's own files. They leave behind a small amount of state ponytail writes outside the plugin folder: the mode flag (`~/.claude/.ponytail-active`, or `~/.cursor/.ponytail-active` for Cursor), `~/.config/ponytail/config.json`, and ponytail's entries in `~/.cursor/hooks.json`. Run `bun scripts/uninstall.ts` to clean those up too. **Run it before the host remove command above**: the script is itself a plugin file, so removing the plugin first deletes it (or run it from a separate clone of this repo). It only removes the statusLine entry if it points at ponytail's own script, so a statusline you set up yourself is left untouched.

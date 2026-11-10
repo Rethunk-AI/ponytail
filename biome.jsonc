@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.6.5/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.6/schema.json",
 
   // canon ts-biome-00001
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
@@ -16,6 +16,21 @@
       "!**/design/support.js",
       "!**/generated",
       "!**/vendor",
+      // Repo-local: prompt payloads are injected verbatim into agent sessions and must stay
+      // byte-identical across their host copies (scripts/check-rule-copies.ts); formatting them
+      // pads tables with tokens every session pays for.
+      "!AGENTS.md",
+      "!CLAUDE.md",
+      "!.github/copilot-instructions.md",
+      "!skills/**/*.md",
+      "!.openclaw/**/*.md",
+      "!.opencode/command/**/*.md",
+      "!.agents/rules/**/*.md",
+      "!.clinerules/**/*.md",
+      "!.cursor/rules",
+      "!.kiro/steering/**/*.md",
+      "!.qoder/rules/**/*.md",
+      "!.windsurf/rules/**/*.md",
       "!.claude"
     ]
   },
@@ -56,7 +71,10 @@
 
       "style": {
         // canon ts-biome-00041
-        "useConsistentTestIt": { "level": "error", "options": { "function": "test", "withinDescribe": "test" } },
+        "useConsistentTestIt": {
+          "level": "error",
+          "options": { "function": "test", "withinDescribe": "test" }
+        },
         // canon ts-biome-00043
         "useImportsFirst": "error",
         // canon ts-biome-00045
@@ -283,11 +301,7 @@
     },
     // canon ts-biome-00016 — end-to-end specs and their config
     {
-      "includes": [
-        "**/e2e/**",
-        "**/playwright.*.config.ts",
-        "**/playwright.config.ts"
-      ],
+      "includes": ["**/e2e/**", "**/playwright.*.config.ts", "**/playwright.config.ts"],
       "linter": {
         "rules": {
           "correctness": {

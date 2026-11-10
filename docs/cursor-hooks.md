@@ -2,23 +2,23 @@
 
 Native Cursor support through `hooks.json` (issue #817). The adapter reuses the
 shared hook scripts; the only Cursor-specific pieces are the hooks template, the
-install script and a small output branch in `hooks/ponytail-runtime.js`.
+install script and a small output branch in `hooks/ponytail-runtime.ts`.
 
-| File | Role |
-|------|------|
-| `hooks/cursor-hooks.json` | Template: `sessionStart` and `beforeSubmitPrompt` entries with a `PONYTAIL_DIR` placeholder. |
-| `scripts/cursor-hooks.js` | `install` / `uninstall`, merges into `~/.cursor/hooks.json` (or `.cursor/hooks.json` with `--project`). |
-| `hooks/ponytail-activate.js` | `sessionStart`: injects the default-level ruleset. |
-| `hooks/ponytail-mode-tracker.js` | `beforeSubmitPrompt`: tracks `/ponytail` commands, injects the new level's ruleset. |
-| `hooks/ponytail-runtime.js` | Detects Cursor (`CURSOR_VERSION`), keeps per-project mode state and a shared compatibility flag, emits Cursor-shaped JSON. |
+| File                             | Role                                                                                                                       |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `hooks/cursor-hooks.json`        | Template: `sessionStart` and `beforeSubmitPrompt` entries with a `PONYTAIL_DIR` placeholder.                               |
+| `scripts/cursor-hooks.ts`        | `install` / `uninstall`, merges into `~/.cursor/hooks.json` (or `.cursor/hooks.json` with `--project`).                    |
+| `hooks/ponytail-activate.ts`     | `sessionStart`: injects the default-level ruleset.                                                                         |
+| `hooks/ponytail-mode-tracker.ts` | `beforeSubmitPrompt`: tracks `/ponytail` commands, injects the new level's ruleset.                                        |
+| `hooks/ponytail-runtime.ts`      | Detects Cursor (`CURSOR_VERSION`), keeps per-project mode state and a shared compatibility flag, emits Cursor-shaped JSON. |
 
 ## Install and uninstall
 
 ```bash
 git clone https://github.com/Rethunk-AI/ponytail
-node ponytail/scripts/cursor-hooks.js install            # ~/.cursor/hooks.json, every project
-node ponytail/scripts/cursor-hooks.js install --project  # <cwd>/.cursor/hooks.json, this project only
-node ponytail/scripts/cursor-hooks.js uninstall          # add --project for the project file
+bun ponytail/scripts/cursor-hooks.ts install            # ~/.cursor/hooks.json, every project
+bun ponytail/scripts/cursor-hooks.ts install --project  # <cwd>/.cursor/hooks.json, this project only
+bun ponytail/scripts/cursor-hooks.ts uninstall          # add --project for the project file
 ```
 
 What the install script does:
@@ -31,7 +31,7 @@ What the install script does:
   shell metacharacters is refused; copy the template by hand in that case.
 - Refuses to touch a `hooks.json` that is not valid JSON, and says so.
 - `uninstall` removes only ponytail's entries and deletes the file when nothing
-  else was in it. `node scripts/uninstall.js` runs the same removal for the user
+  else was in it. `bun scripts/uninstall.ts` runs the same removal for the user
   file and also deletes `~/.cursor/.ponytail-active`.
 
 Cursor watches `hooks.json` and reloads it on save; open a new chat afterwards.
@@ -45,12 +45,12 @@ Cursor 3.20.17 client on Windows, whose hook runner and response validators were
 read directly. "Docs" below means the page documents it; "client" means it was
 verified in the shipped code.
 
-| Event | Ponytail uses | Delivery | Source |
-|-------|---------------|----------|--------|
-| `sessionStart` | output `additional_context` | Stored on the conversation and sent as system context with every request of that conversation. | Docs (field). Client (persistence: the value is kept on the composer as `hooksAdditionalContext` and attached to each request). |
-| `beforeSubmitPrompt` | input `prompt`; output `continue: true` plus `additional_context` | Wrapped as a system reminder for that turn. Inline up to 10,000 characters; longer payloads are written to a file the agent is told to read; above 1,000,000 the payload is dropped. | Docs list only `continue` and `user_message`. Client: the response validator accepts `additional_context` and the submit path injects it. Undocumented, so treat it as version-dependent. |
-| `subagentStart` | not registered | None. | Docs and client: the output schema is `permission` and `user_message` only. The client's protobuf has an unused `additional_context` slot that the hook path never fills. |
-| `preToolUse`, `postToolUse` | not registered | `additional_context` exists on both, but it would cost a process per tool call and `beforeSubmitPrompt` already covers mode changes. | Docs. |
+| Event                       | Ponytail uses                                                     | Delivery                                                                                                                                                                             | Source                                                                                                                                                                                    |
+| --------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sessionStart`              | output `additional_context`                                       | Stored on the conversation and sent as system context with every request of that conversation.                                                                                       | Docs (field). Client (persistence: the value is kept on the composer as `hooksAdditionalContext` and attached to each request).                                                           |
+| `beforeSubmitPrompt`        | input `prompt`; output `continue: true` plus `additional_context` | Wrapped as a system reminder for that turn. Inline up to 10,000 characters; longer payloads are written to a file the agent is told to read; above 1,000,000 the payload is dropped. | Docs list only `continue` and `user_message`. Client: the response validator accepts `additional_context` and the submit path injects it. Undocumented, so treat it as version-dependent. |
+| `subagentStart`             | not registered                                                    | None.                                                                                                                                                                                | Docs and client: the output schema is `permission` and `user_message` only. The client's protobuf has an unused `additional_context` slot that the hook path never fills.                 |
+| `preToolUse`, `postToolUse` | not registered                                                    | `additional_context` exists on both, but it would cost a process per tool call and `beforeSubmitPrompt` already covers mode changes.                                                 | Docs.                                                                                                                                                                                     |
 
 Output rules the runtime follows:
 
@@ -145,13 +145,13 @@ for teammates without hooks stays on the rule's fixed behavior for everyone.
 
 ### Automated compatibility check
 
-`node --test tests/cursor-hooks.test.js` feeds each hook the Cursor input shape
+`bun test tests/cursor-hooks.test.ts` feeds each hook the Cursor input shape
 and asserts the output shape: template validity, `sessionStart` JSON and flag
 placement, `off`, the Claude-plugin environment, every `/ponytail` form on
 `beforeSubmitPrompt`, silence on ordinary prompts, the rule-coexistence notice
 from both `CURSOR_PROJECT_DIR` and the working directory, and the installer's
 merge, idempotence, project scope, file removal and malformed-file refusal.
-`tests/uninstall.test.js` covers the shared uninstall script.
+`tests/uninstall.test.ts` covers the shared uninstall script.
 
 ### Client source check, Cursor 3.20.17 on Windows, 2026-09-14
 
@@ -170,7 +170,7 @@ Run on 2026-09-14 with Cursor 3.20.17 on Windows 11, user-level hooks, model
 not delivery, so each step asks the model to quote the injected header. Record
 the outcome in the table.
 
-1. Install with `node scripts/cursor-hooks.js install`, make sure the workspace
+1. Install with `bun scripts/cursor-hooks.ts install`, make sure the workspace
    has no `.cursor/rules/ponytail.mdc`, open a new Agent chat.
 2. Ask: "Quote the first line of any ponytail context you were given." Expected:
    `PONYTAIL MODE ACTIVE — level: full` (or the configured default).
@@ -187,13 +187,13 @@ the outcome in the table.
    step 2. Expected: the rule notice, starting with `PONYTAIL: the always-on
    Cursor rule`.
 
-| Step | Cursor version | Result | Date |
-|------|----------------|--------|------|
-| 2 startup injection | 3.20.17, Windows | pass. Hooks log: `sessionStart` response merged, flag written. Asked whether ponytail was in place, the model answered that it is active as a hook at level full and named the exact off phrases from the injected Persistence section. | 2026-09-14 |
-| 3 level switch | 3.20.17, Windows | pass. Cursor passed the literal `/ponytail lite` to the hook; the hooks log shows the `continue: true` plus `additional_context` response merged and the flag flipped to `lite`. Asked to quote the first line of the most recent ponytail context, the model answered `PONYTAIL MODE CHANGED — level: lite`, a string that exists only in the hook payload (the ponytail skills were also installed under `~/.cursor/skills`, and their attached body starts with `# Ponytail`). A follow-up date picker request got the lite behavior: build the wrapper, name the lazier alternative in one line. | 2026-09-14 |
-| 4 off | 3.20.17, Windows | pass. Cursor passed the literal `/ponytail off`; the hooks log shows `PONYTAIL MODE OFF` merged as the turn's context, the flag file was removed, and the model replied "Ponytail mode is now off." Asked to quote the first line of the most recent ponytail context, it answered `PONYTAIL MODE OFF`. | 2026-09-14 |
-| 5 subagent | 3.20.17, Windows | not executed: asked to start an Explore subagent with the quoting task, the model declined ("I can't launch a subagent to extract or quote hidden instruction context") and no subagent ran. The limitation rests on the contract: the documented `subagentStart` output is `permission` and `user_message`, and the 3.20.17 client validates only those. | 2026-09-14 |
-| 6 rule coexistence | | not yet run | |
+| Step                | Cursor version   | Result                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Date       |
+| ------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| 2 startup injection | 3.20.17, Windows | pass. Hooks log: `sessionStart` response merged, flag written. Asked whether ponytail was in place, the model answered that it is active as a hook at level full and named the exact off phrases from the injected Persistence section.                                                                                                                                                                                                                                                                                                                                                              | 2026-09-14 |
+| 3 level switch      | 3.20.17, Windows | pass. Cursor passed the literal `/ponytail lite` to the hook; the hooks log shows the `continue: true` plus `additional_context` response merged and the flag flipped to `lite`. Asked to quote the first line of the most recent ponytail context, the model answered `PONYTAIL MODE CHANGED — level: lite`, a string that exists only in the hook payload (the ponytail skills were also installed under `~/.cursor/skills`, and their attached body starts with `# Ponytail`). A follow-up date picker request got the lite behavior: build the wrapper, name the lazier alternative in one line. | 2026-09-14 |
+| 4 off               | 3.20.17, Windows | pass. Cursor passed the literal `/ponytail off`; the hooks log shows `PONYTAIL MODE OFF` merged as the turn's context, the flag file was removed, and the model replied "Ponytail mode is now off." Asked to quote the first line of the most recent ponytail context, it answered `PONYTAIL MODE OFF`.                                                                                                                                                                                                                                                                                              | 2026-09-14 |
+| 5 subagent          | 3.20.17, Windows | not executed: asked to start an Explore subagent with the quoting task, the model declined ("I can't launch a subagent to extract or quote hidden instruction context") and no subagent ran. The limitation rests on the contract: the documented `subagentStart` output is `permission` and `user_message`, and the 3.20.17 client validates only those.                                                                                                                                                                                                                                            | 2026-09-14 |
+| 6 rule coexistence  |                  | not yet run                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |            |
 
 A pass here shows the instructions reached the model at the supported points. It
 says nothing about how often Cursor follows them; that needs a behavioral

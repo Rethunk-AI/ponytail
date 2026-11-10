@@ -75,7 +75,7 @@ def _filter_skill_body_for_mode(body: str, mode: str) -> str:
         # this, an ordinary rule bullet that happens to start with a mode word
         # (e.g. "- Full: ...") is silently dropped in every other mode — it looks
         # like a worked example but is really prose meant to survive verbatim.
-        # Mirrors the fix in hooks/ponytail-instructions.js (#571).
+        # Mirrors the fix in hooks/ponytail-instructions.ts (#571).
         example_label = re.match(r'^-\s*([^:]+):\s*"', line)
         if example_label:
             label_mode = _normalize_runtime_mode(example_label.group(1))
