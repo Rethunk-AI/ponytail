@@ -1,8 +1,7 @@
-#!/usr/bin/env node
 // Smoke test for the OpenCode adapter: the plugin's hooks behave against the
 // real (structural) OpenCode hook shapes. No live OpenCode needed.
 
-import { test } from 'bun:test'
+import { afterAll, beforeAll, test } from 'bun:test'
 
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
@@ -19,14 +18,32 @@ process.env.XDG_CONFIG_HOME = tmp
 delete process.env.PONYTAIL_DEFAULT_MODE
 const statePath = path.join(tmp, 'opencode', '.ponytail-active')
 
-let loadPlugin
-let parseCommandFile
-let parseSkillFile
-test.before(async () => {
+type Plugin = typeof import('../.opencode/plugins/index.ts')['default']
+type Parser = typeof import('../.opencode/lib/ponytail-frontmatter.ts')
+type PluginContext = Parameters<Plugin['setup']>[0]
+type Command = Parameters<Parameters<PluginContext['command']['transform']>[0]>[0] extends {
+  add(item: infer C): void
+}
+  ? C
+  : never
+type Skill = Parameters<Parameters<PluginContext['skill']['transform']>[0]>[0] extends {
+  add(item: infer S): void
+}
+  ? S
+  : never
+type PromptInput = Parameters<PluginContext['session']['prompt']>[0]
+type SystemEvent = Parameters<Parameters<PluginContext['session']['hook']>[1]>[0]
+type SystemHook = Parameters<PluginContext['session']['hook']>[1]
+type HookName = Parameters<PluginContext['session']['hook']>[0]
+
+let loadPlugin: Plugin
+let parseCommandFile: Parser['parseCommandFile']
+let parseSkillFile: Parser['parseSkillFile']
+beforeAll(async () => {
   const url = pathToFileURL(
-    path.join(import.meta.dirname, '..', '.opencode', 'plugins', 'ponytail.ts'),
+    path.join(import.meta.dirname, '..', '.opencode', 'plugins', 'index.ts'),
   )
-  const mod = await import(url)
+  const mod = await import(url.href)
   loadPlugin = mod.default
   // The frontmatter parser used to be exported from the plugin module itself.
   // OpenCode's legacy loader treats every exported function as a plugin and
@@ -39,14 +56,14 @@ test.before(async () => {
 
 test('plugin module exposes only the default export (regression guard for #631, #301)', async () => {
   const url = pathToFileURL(
-    path.join(import.meta.dirname, '..', '.opencode', 'plugins', 'ponytail.ts'),
+    path.join(import.meta.dirname, '..', '.opencode', 'plugins', 'index.ts'),
   )
-  const mod = await import(url)
+  const mod = await import(url.href)
   const namedExports = Object.keys(mod).filter((k) => k !== 'default')
   assert.deepEqual(
     namedExports,
     [],
-    "ponytail.ts must not have named exports: OpenCode's legacy getLegacyPlugins() " +
+    "plugins/index.ts must not have named exports: OpenCode's legacy getLegacyPlugins() " +
       'loader calls every exported function as a plugin factory',
   )
 })
@@ -64,28 +81,30 @@ test('default export is a V2 definition with id + setup, and a V1 server()', () 
 // Minimal structural stand-in for the V2 plugin context. No live OpenCode: the
 // editors and the hook are plain callbacks, so the registered state is just
 // what the plugin handed them.
-function setupV2(overrides = {}) {
-  const added = { skills: [], commands: [] }
-  const prompts = []
-  const hooks = {}
-  const ctx = {
+function setupV2(overrides: Partial<PluginContext> = {}) {
+  const added: { skills: Skill[]; commands: Command[] } = { skills: [], commands: [] }
+  const prompts: PromptInput[] = []
+  const hooks = new Map<HookName, SystemHook>()
+  const ctx: PluginContext = {
     skill: { transform: async (cb) => cb({ add: (s) => added.skills.push(s) }) },
-    command: {
-      transform: async (cb) =>
-        cb({
-          add: (c) => {
-            added.commands.push(c)
-            added.commands[c.name] = c // callable by name
-          },
-        }),
-    },
+    command: { transform: async (cb) => cb({ add: (c) => added.commands.push(c) }) },
     session: {
       prompt: async (input) => prompts.push(input),
-      hook: async (name, cb) => (hooks[name] = cb),
+      hook: async (name, cb) => hooks.set(name, cb),
     },
     ...overrides,
   }
-  return loadPlugin.setup(ctx).then(() => ({ added, prompts, hooks }))
+  const command = (name: string): Command => {
+    const found = added.commands.find((c) => c.name === name)
+    assert.ok(found, `command ${name} is registered`)
+    return found
+  }
+  const hook = (name: HookName): SystemHook => {
+    const found = hooks.get(name)
+    assert.ok(found, `hook ${name} is registered`)
+    return found
+  }
+  return loadPlugin.setup(ctx).then(() => ({ added, prompts, command, hook }))
 }
 
 test('V2 setup registers all six commands and all six skills', async () => {
@@ -116,6 +135,8 @@ test('V2 skill transform matches what OpenCode derives from the same SKILL.md', 
   const source = parseSkillFile(
     path.join(import.meta.dirname, '..', 'skills', 'ponytail', 'SKILL.md'),
   )
+  assert.ok(ponytail && source, 'ponytail skill and its source file are present')
+  assert.ok(ponytail.description, 'ponytail skill has a description')
   assert.equal(ponytail.description, source.description)
   assert.ok(
     ponytail.description.startsWith('Lazy senior dev mode: the smallest change'),
@@ -128,51 +149,51 @@ test('V2 skill transform matches what OpenCode derives from the same SKILL.md', 
 })
 
 test('V2 /ponytail ultra persists the level and sends the template with the args', async () => {
-  const { added, prompts } = await setupV2()
-  await added.commands.ponytail.execute({
+  const { command, prompts } = await setupV2()
+  await command('ponytail').execute({
     sessionID: 's',
     prompt: { text: 'ultra' },
     delivery: 'steer',
   })
   assert.equal(fs.readFileSync(statePath, 'utf8'), 'ultra')
   assert.equal(prompts.length, 1)
-  assert.equal(prompts[0].sessionID, 's')
-  assert.equal(prompts[0].delivery, 'steer')
-  assert.match(prompts[0].text, /^Switch to ponytail ultra mode\./)
-  assert.ok(!prompts[0].text.includes('$ARGUMENTS'), 'template placeholder substituted')
+  assert.equal(prompts[0]?.sessionID, 's')
+  assert.equal(prompts[0]?.delivery, 'steer')
+  assert.match(prompts[0]?.text ?? '', /^Switch to ponytail ultra mode\./)
+  assert.ok(!prompts[0]?.text?.includes('$ARGUMENTS'), 'template placeholder substituted')
 })
 
 test('V2 commands keep attachments without offsets into the replaced prompt text', async () => {
-  const { added, prompts } = await setupV2()
+  const { command, prompts } = await setupV2()
   const prompt = {
     text: '@src/a.ts',
     files: [{ path: 'src/a.ts', mention: { start: 0, end: 9 } }],
     agents: [{ name: 'reviewer', mention: { start: 0, end: 9 } }],
     skills: [{ name: 'test', mention: { start: 0, end: 9 } }],
   }
-  await added.commands['ponytail-review'].execute({ sessionID: 's', prompt, delivery: 'steer' })
-  assert.notEqual(prompts[0].text, prompt.text)
-  assert.deepEqual(prompts[0].files, [{ path: 'src/a.ts' }])
-  assert.deepEqual(prompts[0].agents, [{ name: 'reviewer' }])
-  assert.deepEqual(prompts[0].skills, [{ name: 'test' }])
-  assert.deepEqual(prompt.files[0].mention, { start: 0, end: 9 }, 'original input is unchanged')
+  await command('ponytail-review').execute({ sessionID: 's', prompt, delivery: 'steer' })
+  assert.notEqual(prompts[0]?.text, prompt.text)
+  assert.deepEqual(prompts[0]?.files, [{ path: 'src/a.ts' }])
+  assert.deepEqual(prompts[0]?.agents, [{ name: 'reviewer' }])
+  assert.deepEqual(prompts[0]?.skills, [{ name: 'test' }])
+  assert.deepEqual(prompt.files[0]?.mention, { start: 0, end: 9 }, 'original input is unchanged')
 })
 
 test('V2 command without $ARGUMENTS appends the typed input instead of dropping it (#1087)', async () => {
-  const { added, prompts } = await setupV2()
-  assert.ok(added.commands['ponytail-review'], 'ponytail-review is registered')
-  await added.commands['ponytail-review'].execute({
+  const { command, prompts } = await setupV2()
+  assert.ok(command('ponytail-review'), 'ponytail-review is registered')
+  await command('ponytail-review').execute({
     sessionID: 's',
     prompt: { text: ' feature/login ' },
     delivery: 'steer',
   })
-  await added.commands['ponytail-review'].execute({
+  await command('ponytail-review').execute({
     sessionID: 's',
     prompt: { text: '  ' },
     delivery: 'steer',
   })
-  await added.commands['ponytail-review'].execute({ sessionID: 's', prompt: {}, delivery: 'steer' })
-  const [withInput, blank, missing] = prompts.map((p) => p.text)
+  await command('ponytail-review').execute({ sessionID: 's', prompt: {}, delivery: 'steer' })
+  const [withInput = '', blank = '', missing] = prompts.map((p) => p.text)
   assert.ok(withInput.endsWith('\n\nfeature/login'), 'input appended, trimmed')
   assert.equal(
     withInput.slice(0, -'\n\nfeature/login'.length),
@@ -184,52 +205,48 @@ test('V2 command without $ARGUMENTS appends the typed input instead of dropping 
 })
 
 test('V2 context hook injects the ruleset, and stays silent when off', async () => {
-  try {
-    fs.unlinkSync(statePath)
-  } catch {}
-  let { hooks } = await setupV2()
-  const event = { system: [] }
-  await hooks.context(event)
+  fs.rmSync(statePath, { force: true })
+  let { hook } = await setupV2()
+  const event: SystemEvent = { system: [] }
+  await hook('context')(event)
   assert.equal(event.system.length, 1)
-  assert.equal(event.system[0].type, 'text', 'V2 system entries are typed parts')
-  assert.match(event.system[0].text, /PONYTAIL MODE ACTIVE — level: full/)
-  assert.match(event.system[0].text, /lazy senior developer/)
+  assert.equal(event.system[0]?.type, 'text', 'V2 system entries are typed parts')
+  assert.match(event.system[0]?.text ?? '', /PONYTAIL MODE ACTIVE — level: full/)
+  assert.match(event.system[0]?.text ?? '', /lazy senior developer/)
 
-  const { added } = await setupV2()
-  await added.commands.ponytail.execute({
+  const { command } = await setupV2()
+  await command('ponytail').execute({
     sessionID: 's',
     prompt: { text: 'off' },
     delivery: 'steer',
   })
-  ;({ hooks } = await setupV2())
-  const quiet = { system: [] }
-  await hooks.context(quiet)
+  ;({ hook } = await setupV2())
+  const quiet: SystemEvent = { system: [] }
+  await hook('context')(quiet)
   assert.deepEqual(quiet.system, [])
 })
 
 test('V2 compaction hook injects the same ruleset as context, and stays silent when off (#1086)', async () => {
-  try {
-    fs.unlinkSync(statePath)
-  } catch {}
-  let { hooks } = await setupV2()
-  const fromContext = { system: [] }
-  const fromCompaction = { system: [] }
-  await hooks.context(fromContext)
-  await hooks.compaction(fromCompaction)
+  fs.rmSync(statePath, { force: true })
+  let { hook } = await setupV2()
+  const fromContext: SystemEvent = { system: [] }
+  const fromCompaction: SystemEvent = { system: [] }
+  await hook('context')(fromContext)
+  await hook('compaction')(fromCompaction)
   assert.equal(fromCompaction.system.length, 1)
   assert.deepEqual(fromCompaction.system, fromContext.system)
 
   fs.writeFileSync(statePath, 'off')
-  ;({ hooks } = await setupV2())
-  const quiet = { system: [] }
-  await hooks.compaction(quiet)
+  ;({ hook } = await setupV2())
+  const quiet: SystemEvent = { system: [] }
+  await hook('compaction')(quiet)
   assert.deepEqual(quiet.system, [])
 })
 
 test('V2 unsupported /ponytail arguments do not reset the current mode', async () => {
-  const { added } = await setupV2()
+  const { command } = await setupV2()
   fs.writeFileSync(statePath, 'ultra')
-  await added.commands.ponytail.execute({
+  await command('ponytail').execute({
     sessionID: 's',
     prompt: { text: 'status' },
     delivery: 'steer',
@@ -238,9 +255,9 @@ test('V2 unsupported /ponytail arguments do not reset the current mode', async (
 })
 
 test('V2 bare /ponytail keeps a running level and switches an off session on (#639)', async () => {
-  const { added } = await setupV2()
+  const { command } = await setupV2()
   fs.writeFileSync(statePath, 'ultra')
-  await added.commands.ponytail.execute({ sessionID: 's', prompt: { text: '' }, delivery: 'steer' })
+  await command('ponytail').execute({ sessionID: 's', prompt: { text: '' }, delivery: 'steer' })
   assert.equal(
     fs.readFileSync(statePath, 'utf8'),
     'ultra',
@@ -248,48 +265,45 @@ test('V2 bare /ponytail keeps a running level and switches an off session on (#6
   )
 
   fs.writeFileSync(statePath, 'off')
-  await added.commands.ponytail.execute({ sessionID: 's', prompt: { text: '' }, delivery: 'steer' })
+  await command('ponytail').execute({ sessionID: 's', prompt: { text: '' }, delivery: 'steer' })
   assert.equal(fs.readFileSync(statePath, 'utf8'), 'full')
 })
 
 test('V1 and V2 share one mode file, so a level set under either API applies to both', async () => {
-  const { added } = await setupV2()
-  await added.commands.ponytail.execute({
+  const { command } = await setupV2()
+  await command('ponytail').execute({
     sessionID: 's',
     prompt: { text: 'lite' },
     delivery: 'steer',
   })
   const v1 = await loadPlugin.server({})
-  const output = { system: [] }
+  const output: { system: string[] } = { system: [] }
   await v1['experimental.chat.system.transform']({ model: {} }, output)
   assert.match(output.system.join(''), /PONYTAIL MODE ACTIVE — level: lite/)
 
   // ...and the reverse: a level set by the V1 hook reaches the V2 injection.
   await v1['command.execute.before']({ command: 'ponytail', arguments: 'ultra', sessionID: 's' })
-  const { hooks } = await setupV2()
-  const event = { system: [] }
-  await hooks.context(event)
-  assert.match(event.system[0].text, /PONYTAIL MODE ACTIVE — level: ultra/)
+  const { hook } = await setupV2()
+  const event: SystemEvent = { system: [] }
+  await hook('context')(event)
+  assert.match(event.system[0]?.text ?? '', /PONYTAIL MODE ACTIVE — level: ultra/)
 })
 
 // ---------------------------------------------------------------- V1 ------
 
-function transform(hooks) {
-  const output = { system: [] }
-  return hooks['experimental.chat.system.transform']({ model: {} }, output).then(
-    () => output.system,
-  )
+function transform(hooks: ReturnType<Plugin['server']>) {
+  const output: { system: string[] } = { system: [] }
+  hooks['experimental.chat.system.transform']({ model: {} }, output)
+  return output.system
 }
 
 test('system.transform injects the ruleset at the default mode (full)', async () => {
-  try {
-    fs.unlinkSync(statePath)
-  } catch {}
+  fs.rmSync(statePath, { force: true })
   const hooks = await loadPlugin.server({})
   const system = await transform(hooks)
   assert.equal(system.length, 1)
-  assert.match(system[0], /PONYTAIL MODE ACTIVE — level: full/)
-  assert.match(system[0], /lazy senior developer/)
+  assert.match(system[0] ?? '', /PONYTAIL MODE ACTIVE — level: full/)
+  assert.match(system[0] ?? '', /lazy senior developer/)
 })
 
 test('command.execute.before persists /ponytail ultra, transform follows it', async () => {
@@ -297,7 +311,7 @@ test('command.execute.before persists /ponytail ultra, transform follows it', as
   await hooks['command.execute.before']({ command: 'ponytail', arguments: 'ultra', sessionID: 's' })
   assert.equal(fs.readFileSync(statePath, 'utf8'), 'ultra')
   const system = await transform(hooks)
-  assert.match(system[0], /PONYTAIL MODE ACTIVE — level: ultra/)
+  assert.match(system[0] ?? '', /PONYTAIL MODE ACTIVE — level: ultra/)
 })
 
 test('/ponytail off persists off and transform injects nothing', async () => {
@@ -309,15 +323,13 @@ test('/ponytail off persists off and transform injects nothing', async () => {
 })
 
 test('system.transform merges into existing system entry (Qwen compat, #296)', async () => {
-  try {
-    fs.unlinkSync(statePath)
-  } catch {}
+  fs.rmSync(statePath, { force: true })
   const hooks = await loadPlugin.server({})
-  const output = { system: ['You are a helpful assistant.'] }
+  const output: { system: string[] } = { system: ['You are a helpful assistant.'] }
   await hooks['experimental.chat.system.transform']({ model: {} }, output)
   assert.equal(output.system.length, 1, 'must not add a second system entry')
-  assert.match(output.system[0], /You are a helpful assistant/)
-  assert.match(output.system[0], /PONYTAIL MODE ACTIVE/)
+  assert.match(output.system[0] ?? '', /You are a helpful assistant/)
+  assert.match(output.system[0] ?? '', /PONYTAIL MODE ACTIVE/)
 })
 
 test('unsupported /ponytail arguments do not reset the current mode', async () => {
@@ -342,7 +354,7 @@ test('/ponytail review is not a level: the flag keeps the current mode (#736)', 
   assert.equal(fs.readFileSync(statePath, 'utf8'), 'ultra')
   // A review saved by an older version falls back to the default instead of latching.
   fs.writeFileSync(statePath, 'review')
-  assert.match((await transform(hooks))[0], /PONYTAIL MODE ACTIVE — level: full/)
+  assert.match((await transform(hooks))[0] ?? '', /PONYTAIL MODE ACTIVE — level: full/)
 })
 
 test('/ponytail default lite saves the default and leaves the session level alone', async () => {
@@ -362,9 +374,7 @@ test('/ponytail default lite saves the default and leaves the session level alon
 })
 
 test('unrelated commands do not touch the flag', async () => {
-  try {
-    fs.unlinkSync(statePath)
-  } catch {}
+  fs.rmSync(statePath, { force: true })
   const hooks = await loadPlugin.server({})
   await hooks['command.execute.before']({ command: 'commit', arguments: 'x', sessionID: 's' })
   assert.equal(fs.existsSync(statePath), false)
@@ -407,12 +417,12 @@ test('parseSkillFile folds >, keeps | lines, and stops at the next key', () => {
 
   // Plain scalar stays as written, and a literal block keeps its newlines.
   fs.writeFileSync(file, '---\nname: demo\ndescription: plain\n---\nB\n')
-  assert.equal(parseSkillFile(file).description, 'plain')
+  assert.equal(parseSkillFile(file)?.description, 'plain')
   fs.writeFileSync(file, '---\ndescription: |\n  line one\n  line two\n---\nB\n')
-  assert.equal(parseSkillFile(file).description, 'line one\nline two\n')
+  assert.equal(parseSkillFile(file)?.description, 'line one\nline two\n')
   // Chomping indicator drops the closing newline.
   fs.writeFileSync(file, '---\ndescription: >-\n  stripped\n---\nB\n')
-  assert.equal(parseSkillFile(file).description, 'stripped')
+  assert.equal(parseSkillFile(file)?.description, 'stripped')
 
   // CRLF: a Windows checkout must parse the same as the npm \n build.
   fs.writeFileSync(file, '---\r\nname: demo\r\ndescription: >\r\n  crlf text\r\n---\r\nBODY\r\n')
@@ -426,4 +436,4 @@ test('parseSkillFile folds >, keeps | lines, and stops at the next key', () => {
   assert.equal(parseSkillFile(file), null)
 })
 
-test.after(() => fs.rmSync(tmp, { recursive: true, force: true }))
+afterAll(() => fs.rmSync(tmp, { recursive: true, force: true }))
