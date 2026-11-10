@@ -1,7 +1,7 @@
 ---
 name: ponytail-audit
 description: "Quality audit of the whole repo: bugs, security, real load, missing tests, speed, and what to delete. Most important first."
-homepage: https://github.com/DietrichGebert/ponytail
+homepage: https://github.com/Rethunk-AI/ponytail
 license: MIT
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: ponytail
 description: "Lazy senior dev mode for any coding task: the smallest change that fully solves it, and a reply a busy human understands in one read."
-homepage: https://github.com/DietrichGebert/ponytail
+homepage: https://github.com/Rethunk-AI/ponytail
 license: MIT
 ---
 

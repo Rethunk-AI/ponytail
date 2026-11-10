@@ -1,7 +1,7 @@
 ---
 name: ponytail-gain
 description: "Show ponytail measured impact as a scoreboard: less code, less cost, more speed, from the agentic benchmark averages. One-shot display."
-homepage: https://github.com/DietrichGebert/ponytail
+homepage: https://github.com/Rethunk-AI/ponytail
 license: MIT
 ---
 

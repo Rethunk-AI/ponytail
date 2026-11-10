@@ -14,7 +14,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const HOMEPAGE = 'https://github.com/DietrichGebert/ponytail';
+const HOMEPAGE = 'https://github.com/Rethunk-AI/ponytail';
 
 const DESCRIPTIONS = {
   'ponytail': 'Lazy senior dev mode for any coding task: the smallest change that fully solves it, and a reply a busy human understands in one read.',

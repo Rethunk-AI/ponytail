@@ -1,7 +1,7 @@
 ---
 name: ponytail-debt
 description: "Harvest every shortcut: comment into one debt ledger, so deferrals get tracked instead of forgotten. One-shot report."
-homepage: https://github.com/DietrichGebert/ponytail
+homepage: https://github.com/Rethunk-AI/ponytail
 license: MIT
 ---
 

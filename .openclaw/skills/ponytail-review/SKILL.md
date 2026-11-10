@@ -1,7 +1,7 @@
 ---
 name: ponytail-review
 description: "Quality review of a diff: bugs, security, real load, missing tests, speed, and what to delete. Each finding says what goes wrong and how to fix it."
-homepage: https://github.com/DietrichGebert/ponytail
+homepage: https://github.com/Rethunk-AI/ponytail
 license: MIT
 ---
 

@@ -7,10 +7,10 @@ The Claude Code and Codex plugins (and the Cursor hooks) run two tiny Node.js li
 ## Claude Code
 
 ```
-/plugin marketplace add DietrichGebert/ponytail
+/plugin marketplace add Rethunk-AI/ponytail
 ```
 ```
-/plugin install ponytail@ponytail
+/plugin install ponytail@rethunk-ponytail
 ```
 (You have to send two separate prompts for the install to work) 
 
@@ -21,8 +21,8 @@ CodeBuddy installs the same plugin with the same two `/plugin` commands and swit
 ## Codex
 
 ```bash
-codex plugin marketplace add DietrichGebert/ponytail
-codex plugin add ponytail@ponytail
+codex plugin marketplace add Rethunk-AI/ponytail
+codex plugin add ponytail@rethunk-ponytail
 ```
 
 Run `codex` and open `/hooks`, review and trust its two lifecycle hooks, and start a new thread.
@@ -32,15 +32,15 @@ This same install also covers the Codex desktop app: restart the app after insta
 ## GitHub Copilot CLI
 
 ```bash
-copilot plugin marketplace add DietrichGebert/ponytail
-copilot plugin install ponytail@ponytail
+copilot plugin marketplace add Rethunk-AI/ponytail
+copilot plugin install ponytail@rethunk-ponytail
 ```
 
 In an interactive Copilot CLI session, use the slash equivalents:
 
 ```
-/plugin marketplace add DietrichGebert/ponytail
-/plugin install ponytail@ponytail
+/plugin marketplace add Rethunk-AI/ponytail
+/plugin install ponytail@rethunk-ponytail
 ```
 
 Copilot CLI namespaces plugin commands by plugin name. For example:
@@ -53,18 +53,18 @@ Copilot CLI namespaces plugin commands by plugin name. For example:
 ## Pi agent harness
 
 ```
-pi install git:github.com/DietrichGebert/ponytail
+pi install git:github.com/Rethunk-AI/ponytail
 ```
 
 ## Kimi Code
 
-In Kimi Code, run `/plugins install https://github.com/DietrichGebert/ponytail`, then `/reload` or start a new session. The plugin puts [`AGENTS.md`](AGENTS.md) into the system prompt every turn and adds the six skills, which Kimi also offers as `/ponytail`, `/ponytail-review`, `/ponytail-audit`, `/ponytail-debt`, `/ponytail-gain` and `/ponytail-help`. Level switching (`/ponytail lite`) loads the skill for that turn; there is no persistent mode flag in Kimi.
+In Kimi Code, run `/plugins install https://github.com/Rethunk-AI/ponytail`, then `/reload` or start a new session. The plugin puts [`AGENTS.md`](AGENTS.md) into the system prompt every turn and adds the six skills, which Kimi also offers as `/ponytail`, `/ponytail-review`, `/ponytail-audit`, `/ponytail-debt`, `/ponytail-gain` and `/ponytail-help`. Level switching (`/ponytail lite`) loads the skill for that turn; there is no persistent mode flag in Kimi.
 
 ## Oh My Pi (omp)
 
 ```bash
-omp plugin marketplace add DietrichGebert/ponytail
-omp plugin install ponytail@ponytail
+omp plugin marketplace add Rethunk-AI/ponytail
+omp plugin install ponytail@rethunk-ponytail
 ```
 
 omp runs ponytail's Pi extension unchanged, so the ruleset is injected every turn as in Pi (verified with omp 18.6.1). Start a new session after installing.
@@ -98,13 +98,13 @@ OpenCode 1 has no `plugin add` and uses the older `plugin` key: `{ "plugin": ["@
 ## Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/DietrichGebert/ponytail
+gemini extensions install https://github.com/Rethunk-AI/ponytail
 ```
 
 Loads the ruleset as always-on context every session and registers the `/ponytail` commands; the `skills/` ship too, activated when a task needs them.
 The Gemini adapter intentionally does not ship a root `hooks/hooks.json`: Gemini auto-loads that path, while Ponytail's lifecycle hooks use Claude/Codex event names.
 
-Qwen Code installs the same extension: `qwen extensions install DietrichGebert/ponytail:ponytail`. It loads `AGENTS.md` as always-on context and registers the `/ponytail` commands and the skills; levels don't persist across sessions, since the lifecycle hooks are not used.
+Qwen Code installs the same extension: `qwen extensions install Rethunk-AI/ponytail:ponytail`. It loads `AGENTS.md` as always-on context and registers the `/ponytail` commands and the skills; levels don't persist across sessions, since the lifecycle hooks are not used.
 
 ## Qoder
 
@@ -115,7 +115,7 @@ For full plugin-tier support (automatic mode activation + ruleset injection on e
 ## Antigravity CLI
 
 ```bash
-agy plugin install https://github.com/DietrichGebert/ponytail
+agy plugin install https://github.com/Rethunk-AI/ponytail
 ```
 
 Installs the six skills, and Antigravity turns the `/ponytail` commands into skills as well, so you [call them as slash commands](https://www.antigravity.google/docs/skills#slash-command-conversion) such as `/ponytail-review`. No lifecycle hooks, so levels don't persist. For the always-on ruleset, copy [`AGENTS.md`](AGENTS.md) into your project; Antigravity [reads it as workspace rules](https://www.antigravity.google/docs/rules). Install verified with Antigravity CLI 1.3.3.
@@ -123,13 +123,13 @@ Installs the six skills, and Antigravity turns the `/ponytail` commands into ski
 ## Hermes Agent
 
 ```bash
-hermes plugins install DietrichGebert/ponytail --enable
+hermes plugins install Rethunk-AI/ponytail --enable
 ```
 
 If that stops with `plugin.json declares an unsupported or missing Agent Plugins schema`, it is Hermes' install check (fix pending in [NousResearch/hermes-agent#125937](https://github.com/NousResearch/hermes-agent/pull/125937)). Until it lands, clone the plugin in by hand; Hermes loads it from `plugin.yaml` as usual (verified with Hermes Agent v0.21.7):
 
 ```bash
-git clone https://github.com/DietrichGebert/ponytail.git ~/.hermes/plugins/ponytail
+git clone https://github.com/Rethunk-AI/ponytail.git ~/.hermes/plugins/ponytail
 hermes plugins enable ponytail
 ```
 
@@ -142,7 +142,7 @@ Reads `AGENTS.md` from the project root, zero setup. Copy [`AGENTS.md`](AGENTS.m
 ## Devin CLI
 
 ```bash
-devin plugins install DietrichGebert/ponytail
+devin plugins install Rethunk-AI/ponytail
 ```
 
 Installs ponytail as a Devin plugin; skills are available as `/ponytail:ponytail`, `/ponytail:ponytail-review`, and so on.
@@ -158,7 +158,7 @@ Installs ponytail as an OpenClaw skill from ClawHub; the review, audit, debt, ga
 ## Grok Build
 
 ```bash
-grok plugin install DietrichGebert/ponytail --trust
+grok plugin install Rethunk-AI/ponytail --trust
 ```
 
 Enable the plugin (off by default): `/plugins` → Plugins → Space on `ponytail`, or in `~/.grok/config.toml`:
@@ -175,7 +175,7 @@ Start a new session (or reload plugins). Skills show as `/ponytail`, `/ponytail-
 ## Goose
 
 ```bash
-goose plugin install https://github.com/DietrichGebert/ponytail.git
+goose plugin install https://github.com/Rethunk-AI/ponytail.git
 ```
 
 That imports the six skills as `ponytail:ponytail`, `ponytail:ponytail-review` and so on. For the always-on rules, copy [`AGENTS.md`](AGENTS.md) to `~/.agents/AGENTS.md` (or into your project; `~/.config/goose/.goosehints` works too). Goose has no lifecycle hooks, so the levels don't persist.
@@ -183,7 +183,7 @@ That imports the six skills as `ponytail:ponytail`, `ponytail:ponytail-review` a
 ## Cursor
 
 ```bash
-git clone https://github.com/DietrichGebert/ponytail
+git clone https://github.com/Rethunk-AI/ponytail
 node ponytail/scripts/cursor-hooks.js install
 ```
 
@@ -200,7 +200,7 @@ While active, the ruleset is also injected into every subagent spawned via the A
 The [skills CLI](https://skills.sh) copies the six ponytail skills into the skills folder of many agents:
 
 ```bash
-npx skills add DietrichGebert/ponytail
+npx skills add Rethunk-AI/ponytail
 ```
 
 Pick the agent with `--agent` (for IBM Bob: `--agent bob`), take all six without asking with `--skill '*'`, and add `--global` to install for your user instead of the project. This installs the skills only; for the always-on ruleset, also add [`AGENTS.md`](AGENTS.md) or use one of the plugins above.
@@ -232,7 +232,7 @@ Jules (Google) reads `AGENTS.md` from the repository root, which this repo ships
 | Pi agent | `pi uninstall ponytail` |
 | Kimi Code | `/plugins` in Kimi Code, then remove ponytail |
 | Skills CLI | `npx skills remove ponytail ponytail-audit ponytail-debt ponytail-gain ponytail-help ponytail-review` (same `--agent` / `--global` flags as the install) |
-| Oh My Pi (omp) | `omp plugin uninstall ponytail@ponytail`, then `omp plugin marketplace remove ponytail` |
+| Oh My Pi (omp) | `omp plugin uninstall ponytail@rethunk-ponytail`, then `omp plugin marketplace remove rethunk-ponytail` |
 | OpenCode | `opencode plugin remove @dietrichgebert/ponytail` |
 | Cursor hooks | `node scripts/cursor-hooks.js uninstall` (add `--project` for a project-level install); removes only ponytail's entries from `hooks.json` |
 | Cursor rule / Windsurf / Cline / Qoder / etc. | Delete the copied rule file |
