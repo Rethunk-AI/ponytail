@@ -361,6 +361,27 @@
         }
       }
     },
+    // Repo-local, after canon ts-biome-00018: hooks and host plugins run inside agent hosts
+    // (Bun, Node, Pi, OpenCode) and are never bundled for a browser, so Node builtins and
+    // `process` are their platform, the same ground as a server route.
+    {
+      "includes": ["hooks/**", "pi-extension/**", ".opencode/plugins/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noNodejsModules": "off",
+            "noProcessGlobal": "off"
+          }
+        }
+      }
+    },
+    // Repo-local: host environment variables are this plugin's input contract. Every read goes
+    // through this one module, which validates and types them (canon ts-biome-00034's
+    // "validated configuration"); everywhere else noProcessEnv still holds.
+    {
+      "includes": ["hooks/ponytail-env.ts"],
+      "linter": { "rules": { "style": { "noProcessEnv": "off" } } }
+    },
     // canon ts-biome-00027 — ambient declarations
     {
       "includes": ["**/*.d.ts"],
