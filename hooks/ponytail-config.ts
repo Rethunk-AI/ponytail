@@ -12,12 +12,49 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import {
+  getAppData,
+  getClaudeConfigDir,
+  getPonytailDefaultMode,
+  getPonytailHideStatus,
+  getPonytailQuietStartup,
+  getQoderConfigDir,
+  getXdgConfigHome,
+} from './ponytail-env.ts'
 
 const DEFAULT_MODE = 'full'
-const VALID_MODES = ['off', 'lite', 'full', 'ultra', 'review']
-const RUNTIME_MODES = ['off', 'lite', 'full', 'ultra']
+const VALID_MODES: readonly string[] = ['off', 'lite', 'full', 'ultra', 'review']
+const RUNTIME_MODES: readonly string[] = ['off', 'lite', 'full', 'ultra']
+const BOM_RE = /^\uFEFF/
+const TRAILING_PUNCT_RE = /[.!?\s]+$/
+const SHELL_SAFE_RE = /^[A-Za-z0-9 _.\-:/\\~]+$/
 
-function normalizeMode(mode) {
+interface PonytailConfig {
+  defaultMode?: unknown
+  quietStartup?: unknown
+  hideStatus?: unknown
+}
+
+// Strips the UTF-8 BOM (common on Windows-saved files) so JSON.parse doesn't choke.
+function readConfigFile(configPath: string): unknown {
+  return JSON.parse(fs.readFileSync(configPath, 'utf8').replace(BOM_RE, ''))
+}
+
+function isConfigObject(value: unknown): value is PonytailConfig {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function readConfig(): PonytailConfig {
+  const parsed = readConfigFile(getConfigPath())
+  return isConfigObject(parsed) ? parsed : {}
+}
+
+function isTruthyFlag(raw: string): boolean {
+  const v = raw.trim().toLowerCase()
+  return v !== '' && v !== '0' && v !== 'false' && v !== 'no'
+}
+
+function normalizeMode(mode: unknown): string | null {
   if (typeof mode !== 'string') {
     return null
   }
@@ -25,7 +62,7 @@ function normalizeMode(mode) {
   return RUNTIME_MODES.includes(normalized) ? normalized : null
 }
 
-function normalizeConfigMode(mode) {
+function normalizeConfigMode(mode: unknown): string | null {
   if (typeof mode !== 'string') {
     return null
   }
@@ -33,7 +70,7 @@ function normalizeConfigMode(mode) {
   return VALID_MODES.includes(normalized) ? normalized : null
 }
 
-function normalizePersistedMode(mode) {
+function normalizePersistedMode(mode: unknown): string | null {
   return normalizeMode(mode) || normalizeConfigMode(mode)
 }
 
@@ -41,11 +78,11 @@ function normalizePersistedMode(mode) {
 // command. Matching the phrase anywhere in the message turned it off mid-task
 // for ordinary requests like "add a normal mode toggle" — so require the whole
 // message to be the command, ignoring case and trailing punctuation.
-function isDeactivationCommand(text) {
+function isDeactivationCommand(text: unknown): boolean {
   const t = String(text || '')
     .trim()
     .toLowerCase()
-    .replace(/[.!?\s]+$/, '')
+    .replace(TRAILING_PUNCT_RE, '')
   return t === 'stop ponytail' || t === 'normal mode'
 }
 
@@ -54,52 +91,47 @@ function isDeactivationCommand(text) {
 // metacharacters; a hostile clone path (quotes, &, $, backtick, ;, etc.) falls back
 // to manual setup instead. Allows : \ / for normal Windows and POSIX paths. Full
 // per-shell escaper only if a real need appears.
-function isShellSafe(p) {
-  return typeof p === 'string' && /^[A-Za-z0-9 _.\-:/\\~]+$/.test(p)
+function isShellSafe(p: unknown): boolean {
+  return typeof p === 'string' && SHELL_SAFE_RE.test(p)
 }
 
-function getConfigDir() {
-  if (process.env.XDG_CONFIG_HOME) {
-    return path.join(process.env.XDG_CONFIG_HOME, 'ponytail')
+function getConfigDir(): string {
+  const xdgConfigHome = getXdgConfigHome()
+  if (xdgConfigHome) {
+    return path.join(xdgConfigHome, 'ponytail')
   }
   if (process.platform === 'win32') {
-    return path.join(
-      process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'),
-      'ponytail',
-    )
+    return path.join(getAppData() || path.join(os.homedir(), 'AppData', 'Roaming'), 'ponytail')
   }
   return path.join(os.homedir(), '.config', 'ponytail')
 }
 
-function getConfigPath() {
+function getConfigPath(): string {
   return path.join(getConfigDir(), 'config.json')
 }
 
-function getClaudeDir() {
+function getClaudeDir(): string {
   // ponytail: CLAUDE_CONFIG_DIR overrides ~/.claude, matching Claude Code.
-  return process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude')
+  return getClaudeConfigDir() || path.join(os.homedir(), '.claude')
 }
 
-function getQoderDir() {
-  return process.env.QODER_CONFIG_DIR || path.join(os.homedir(), '.qoder')
+function getQoderDir(): string {
+  return getQoderConfigDir() || path.join(os.homedir(), '.qoder')
 }
 
-function getDefaultMode() {
+function getDefaultMode(): string {
   // 1. Environment variable (highest priority)
   // ponytail: a default must be a runtime level (off/lite/full/ultra); review is
   // a session-only mode, never a valid default (#377). Normalize here so values
   // with whitespace or mixed casing still resolve correctly.
-  const envMode = normalizeMode(process.env.PONYTAIL_DEFAULT_MODE)
+  const envMode = normalizeMode(getPonytailDefaultMode())
   if (envMode) {
     return envMode
   }
 
   // 2. Config file
   try {
-    const configPath = getConfigPath()
-    // Strip UTF-8 BOM (common on Windows-saved files) so JSON.parse doesn't choke
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8').replace(/^\uFEFF/, ''))
-    const configMode = normalizeMode(config.defaultMode)
+    const configMode = normalizeMode(readConfig().defaultMode)
     if (configMode) {
       return configMode
     }
@@ -114,15 +146,13 @@ function getDefaultMode() {
 // Silence the pi "Ponytail loaded" startup toast while keeping ponytail active.
 // PONYTAIL_QUIET_STARTUP=1 (or any truthy value; 0/false/empty mean "show it")
 // takes precedence, else config.quietStartup === true. Mirrors getHideStatus.
-function getQuietStartup() {
-  const env = process.env.PONYTAIL_QUIET_STARTUP
+function getQuietStartup(): boolean {
+  const env = getPonytailQuietStartup()
   if (env !== undefined) {
-    const v = env.trim().toLowerCase()
-    return v !== '' && v !== '0' && v !== 'false' && v !== 'no'
+    return isTruthyFlag(env)
   }
   try {
-    const config = JSON.parse(fs.readFileSync(getConfigPath(), 'utf8').replace(/^\uFEFF/, ''))
-    return config.quietStartup === true
+    return readConfig().quietStartup === true
   } catch {
     return false
   }
@@ -131,21 +161,19 @@ function getQuietStartup() {
 // Hide the status-bar indicator while keeping ponytail active (#324).
 // PONYTAIL_HIDE_STATUS=1 (or any truthy value; 0/false/empty mean "don't hide")
 // takes precedence, else config.hideStatus === true.
-function getHideStatus() {
-  const env = process.env.PONYTAIL_HIDE_STATUS
+function getHideStatus(): boolean {
+  const env = getPonytailHideStatus()
   if (env !== undefined) {
-    const v = env.trim().toLowerCase()
-    return v !== '' && v !== '0' && v !== 'false' && v !== 'no'
+    return isTruthyFlag(env)
   }
   try {
-    const config = JSON.parse(fs.readFileSync(getConfigPath(), 'utf8').replace(/^\uFEFF/, ''))
-    return config.hideStatus === true
+    return readConfig().hideStatus === true
   } catch {
     return false
   }
 }
 
-function writeDefaultMode(mode) {
+function writeDefaultMode(mode: unknown): string | null {
   // ponytail: only a runtime level can be a default; review is session-only (#377).
   const normalized = normalizeMode(mode)
   if (!normalized) {
@@ -154,13 +182,12 @@ function writeDefaultMode(mode) {
 
   const configPath = getConfigPath()
   fs.mkdirSync(path.dirname(configPath), { recursive: true })
-  let config = {}
+  let config: PonytailConfig = {}
   try {
-    config = JSON.parse(fs.readFileSync(configPath, 'utf8').replace(/^\uFEFF/, ''))
-    if (!config || typeof config !== 'object' || Array.isArray(config)) {
-      config = {}
-    }
-  } catch {}
+    config = readConfig()
+  } catch {
+    // Missing or unparseable config: start from an empty one
+  }
   config.defaultMode = normalized
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8')
   return normalized

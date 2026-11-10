@@ -16,11 +16,18 @@ import {
   cursorRulePath,
   isCursor,
   readMode,
+  STDIN_FALLBACK_MS,
   setMode,
   writeHookOutput,
 } from './ponytail-runtime.ts'
 
-function activate(mode) {
+const BOM_RE = /^\uFEFF/
+
+interface SessionStartPayload {
+  source?: unknown
+}
+
+function activate(mode: string): void {
   // "off" mode — skip activation entirely, don't write flag or emit rules
   if (mode === 'off') {
     clearMode()
@@ -71,10 +78,11 @@ function finish() {
     return
   }
   done = true
-  let source = ''
+  let source: unknown = ''
   try {
     // Strip UTF-8 BOM some shells prepend when piping (breaks JSON.parse)
-    source = JSON.parse(input.replace(/^\uFEFF/, '')).source
+    const payload: SessionStartPayload = JSON.parse(input.replace(BOM_RE, ''))
+    source = payload.source
   } catch {
     // No payload, or an unparseable one: treat it as a fresh session
   }
@@ -97,4 +105,4 @@ process.stdin.on('error', () => {
 setTimeout(() => {
   finish()
   process.exit(0)
-}, 1000)
+}, STDIN_FALLBACK_MS)

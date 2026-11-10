@@ -12,8 +12,15 @@
 // "^general$" is exact. Unset means inject into every subagent, as before.
 
 import vm from 'node:vm'
+import { getPonytailSubagentMatcher } from './ponytail-env.ts'
 import { getPonytailInstructions } from './ponytail-instructions.ts'
-import { readMode, writeHookOutput } from './ponytail-runtime.ts'
+import { readMode, STDIN_FALLBACK_MS, writeHookOutput } from './ponytail-runtime.ts'
+
+const BOM_RE = /^\uFEFF/
+
+interface SubagentPayload {
+  agent_type?: unknown
+}
 
 const mode = readMode()
 
@@ -21,20 +28,22 @@ const mode = readMode()
 if (!mode || mode === 'off') {
   process.exit(0)
 }
+const activeMode: string = mode
 
-function inject() {
+function inject(): void {
   try {
-    writeHookOutput('SubagentStart', mode, getPonytailInstructions(mode))
+    writeHookOutput('SubagentStart', activeMode, getPonytailInstructions(activeMode))
   } catch {
     // Silent fail — a stdout error at hook exit must not surface as a hook failure.
   }
 }
 
 // A bad regex must never crash the hook; treat it as "no matcher" and inject.
-let matcherRe = null
+let matcherRe: RegExp | null = null
 try {
-  if (process.env.PONYTAIL_SUBAGENT_MATCHER) {
-    matcherRe = new RegExp(process.env.PONYTAIL_SUBAGENT_MATCHER, 'i')
+  const matcher = getPonytailSubagentMatcher()
+  if (matcher) {
+    matcherRe = new RegExp(matcher, 'i')
   }
 } catch {
   matcherRe = null
@@ -64,7 +73,8 @@ function finish() {
   let agentType = ''
   try {
     // Strip UTF-8 BOM some shells prepend when piping (breaks JSON.parse)
-    agentType = String(JSON.parse(input.replace(/^\uFEFF/, '')).agent_type || '').trim()
+    const payload: SubagentPayload = JSON.parse(input.replace(BOM_RE, ''))
+    agentType = String(payload.agent_type || '').trim()
   } catch {
     // Unparseable payload — fall through and inject to be safe.
   }
@@ -105,4 +115,4 @@ process.stdin.on('error', () => {
 setTimeout(() => {
   finish()
   process.exit(0)
-}, 1000)
+}, STDIN_FALLBACK_MS)

@@ -7,22 +7,26 @@ import path from 'node:path'
 import { DEFAULT_MODE, normalizeMode, normalizePersistedMode } from './ponytail-config.ts'
 
 const INDEPENDENT_MODES = new Set(['review'])
+const FRONTMATTER_RE = /^---[\s\S]*?---\s*/
+const LINE_BREAK_RE = /\r?\n/
+const TABLE_LABEL_RE = /^\|\s*\*\*(.+?)\*\*\s*\|/
+const EXAMPLE_LABEL_RE = /^-\s*([^:]+):\s*"/
 const SKILL_PATH = path.join(import.meta.dirname, '..', 'skills', 'ponytail', 'SKILL.md')
 
-function filterSkillBodyForMode(body, mode) {
+function filterSkillBodyForMode(body: unknown, mode: unknown): string {
   const effectiveMode = normalizeMode(mode) || DEFAULT_MODE
-  const withoutFrontmatter = String(body || '').replace(/^---[\s\S]*?---\s*/, '')
+  const withoutFrontmatter = String(body || '').replace(FRONTMATTER_RE, '')
 
   // Only the intensity table rows and worked examples are mode-specific, and
   // both are keyed by a mode name (lite/full/ultra). A bullet whose label is
   // not a mode — e.g. "No unrequested abstractions: ..." — is a normal rule
   // and must be kept verbatim.
   return withoutFrontmatter
-    .split(/\r?\n/)
+    .split(LINE_BREAK_RE)
     .filter((line) => {
-      const tableLabel = line.match(/^\|\s*\*\*(.+?)\*\*\s*\|/)
+      const tableLabel = TABLE_LABEL_RE.exec(line)
       if (tableLabel) {
-        const labelMode = normalizeMode(tableLabel[1].trim())
+        const labelMode = normalizeMode(tableLabel[1]?.trim())
         if (labelMode) {
           return labelMode === effectiveMode
         }
@@ -32,9 +36,9 @@ function filterSkillBodyForMode(body, mode) {
       // this, an ordinary rule bullet that happens to start with a mode word
       // (e.g. "- Full: ...") is silently dropped in every other mode — it looks
       // like a worked example but is really prose meant to survive verbatim.
-      const exampleLabel = line.match(/^-\s*([^:]+):\s*"/)
+      const exampleLabel = EXAMPLE_LABEL_RE.exec(line)
       if (exampleLabel) {
-        const labelMode = normalizeMode(exampleLabel[1].trim())
+        const labelMode = normalizeMode(exampleLabel[1]?.trim())
         if (labelMode) {
           return labelMode === effectiveMode
         }
@@ -45,7 +49,7 @@ function filterSkillBodyForMode(body, mode) {
     .join('\n')
 }
 
-function getFallbackInstructions(mode) {
+function getFallbackInstructions(mode: string): string {
   // Used only when SKILL.md cannot be read: the same rules as AGENTS.md.
   return (
     'PONYTAIL MODE ACTIVE — level: ' +
@@ -83,7 +87,7 @@ function getFallbackInstructions(mode) {
   )
 }
 
-function getPonytailInstructions(mode) {
+function getPonytailInstructions(mode: unknown): string {
   const configuredMode = normalizePersistedMode(mode) || DEFAULT_MODE
 
   if (INDEPENDENT_MODES.has(configuredMode)) {
