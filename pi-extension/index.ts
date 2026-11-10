@@ -5,7 +5,6 @@ import {
   getQuietStartup,
   isDeactivationCommand,
   normalizeMode,
-  normalizePersistedMode,
   RUNTIME_MODES,
   writeDefaultMode,
 } from '../hooks/ponytail-config.ts'
@@ -112,7 +111,7 @@ export function completePonytailArgs(prefix: string | undefined) {
 }
 
 export function resolveSessionMode(entries: unknown, fallbackMode: unknown = DEFAULT_MODE): string {
-  const fallback = normalizePersistedMode(fallbackMode) || DEFAULT_MODE
+  const fallback = normalizeMode(fallbackMode) || DEFAULT_MODE
   if (!Array.isArray(entries)) {
     return fallback
   }
@@ -123,7 +122,7 @@ export function resolveSessionMode(entries: unknown, fallbackMode: unknown = DEF
       continue
     }
 
-    const mode = normalizePersistedMode(entry?.data?.mode)
+    const mode = normalizeMode(entry?.data?.mode)
     if (mode) {
       return mode
     }
@@ -137,7 +136,7 @@ export function parsePonytailCommand(
   defaultMode: unknown = DEFAULT_MODE,
   currentMode: string | null = null,
 ): PonytailCommand {
-  const fallback = normalizePersistedMode(defaultMode) || DEFAULT_MODE
+  const fallback = normalizeMode(defaultMode) || DEFAULT_MODE
   const normalizedText = String(text || '')
     .trim()
     .toLowerCase()
@@ -264,7 +263,7 @@ export default function ponytailExtension(pi: PiApi) {
   }
 
   const setMode = (mode: unknown, ctx: PiContext) => {
-    const normalized = normalizePersistedMode(mode)
+    const normalized = normalizeMode(mode)
     if (!normalized) {
       return
     }

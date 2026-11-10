@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // ponytail — Claude Code SubagentStart hook
 //
 // SessionStart context is parent-thread only and never reaches subagents, so

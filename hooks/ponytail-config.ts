@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ponytail — shared configuration resolver
 //
 // Resolution order for default mode:
@@ -23,7 +22,6 @@ import {
 } from './ponytail-env.ts'
 
 const DEFAULT_MODE = 'full'
-const VALID_MODES: readonly string[] = ['off', 'lite', 'full', 'ultra', 'review']
 const RUNTIME_MODES: readonly string[] = ['off', 'lite', 'full', 'ultra']
 const BOM_RE = /^\uFEFF/
 const TRAILING_PUNCT_RE = /[.!?\s]+$/
@@ -60,18 +58,6 @@ function normalizeMode(mode: unknown): string | null {
   }
   const normalized = mode.trim().toLowerCase()
   return RUNTIME_MODES.includes(normalized) ? normalized : null
-}
-
-function normalizeConfigMode(mode: unknown): string | null {
-  if (typeof mode !== 'string') {
-    return null
-  }
-  const normalized = mode.trim().toLowerCase()
-  return VALID_MODES.includes(normalized) ? normalized : null
-}
-
-function normalizePersistedMode(mode: unknown): string | null {
-  return normalizeMode(mode) || normalizeConfigMode(mode)
 }
 
 // "stop ponytail" / "normal mode" turn ponytail off, but only as a standalone
@@ -207,10 +193,7 @@ export {
   getQuietStartup,
   isDeactivationCommand,
   isShellSafe,
-  normalizeConfigMode,
   normalizeMode,
-  normalizePersistedMode,
   RUNTIME_MODES,
-  VALID_MODES,
   writeDefaultMode,
 }

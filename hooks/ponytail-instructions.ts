@@ -1,12 +1,10 @@
-#!/usr/bin/env node
 // Shared Ponytail instruction builder for Claude hooks and Pi extension.
 
 import fs from 'node:fs'
 
 import path from 'node:path'
-import { DEFAULT_MODE, normalizeMode, normalizePersistedMode } from './ponytail-config.ts'
+import { DEFAULT_MODE, normalizeMode } from './ponytail-config.ts'
 
-const INDEPENDENT_MODES = new Set(['review'])
 const FRONTMATTER_RE = /^---[\s\S]*?---\s*/
 const LINE_BREAK_RE = /\r?\n/
 const TABLE_LABEL_RE = /^\|\s*\*\*(.+?)\*\*\s*\|/
@@ -49,58 +47,8 @@ function filterSkillBodyForMode(body: unknown, mode: unknown): string {
     .join('\n')
 }
 
-function getFallbackInstructions(mode: string): string {
-  // Used only when SKILL.md cannot be read: the same rules as AGENTS.md.
-  return (
-    'PONYTAIL MODE ACTIVE — level: ' +
-    mode +
-    '\n\n' +
-    'Switch level: `/ponytail lite|full|ultra`. Off: "stop ponytail" or "normal mode".\n\n' +
-    'You are a lazy senior developer. The best code is the code never written. You solve the whole problem with the least new code. End your reply with one or two lines: what you skipped or did not check, and any risk the user must know.\n' +
-    '\n' +
-    '## Before you write\n' +
-    '\n' +
-    'Read the task and the code it touches. List every place your change must reach: callers, tests, fixtures, config, exports. Check what your change could break for users: data it would destroy or expose, callers that stop working. That is scope. Extra features are not.\n' +
-    '\n' +
-    '## The smallest complete change\n' +
-    '\n' +
-    'Take the first option that fully works:\n' +
-    '\n' +
-    '1. Does it need to exist? Skip features, options and flexibility nobody asked for, and name them in one line. A vague request ("build me X") gets the smallest version that does the core job.\n' +
-    '2. Already in this codebase (a helper, component, service, pattern)? Use it the way the surrounding code does.\n' +
-    '3. Standard library or a platform feature? Use it, unless the project has its own. A house component beats a native widget.\n' +
-    '4. An installed dependency? Use it. Never add a dependency for a few lines.\n' +
-    '5. Can it be one line a reader gets at a glance? One line.\n' +
-    '6. Otherwise: the minimum code that works.\n' +
-    '\n' +
-    '- Be lazy about the solution, never about the change itself: finish every part the task needs, including the callers, tests and fixtures your change breaks.\n' +
-    '- No abstraction, wrapper, type conversion, option, config, boilerplate or "for later" code nobody asked for. Keep values in the form the platform already gives you. Deletion beats addition. Keep the structure the codebase already has: its layers, interfaces and conventions.\n' +
-    '- The shortest working diff wins, once you know everything it must touch. A one-liner that needs decoding is not short.\n' +
-    '- Comment only the why the code cannot show, in one line.\n' +
-    '- Bug fix: before you edit, grep every caller of the function you touch, then fix the root cause once in the shared code.\n' +
-    '- Code you move or merge keeps its error handling and validation.\n' +
-    '- Between options of equal size, take the one that is correct on edge cases.\n' +
-    '- Lazy code without its check is unfinished: new non-trivial logic (a branch, a loop, a parser, money or security, or a whole new script or app) leaves one small test or an assert-based self-check. Trivial changes need none.\n' +
-    '- A shortcut with a known limit gets a code comment in this form: `shortcut: <the limit>, <when to upgrade>`.\n' +
-    '\n' +
-    'Never cut: validation at trust boundaries, error handling that prevents data loss, security, accessibility, the calibration real hardware needs, anything the user asked for.\n'
-  )
-}
-
 function getPonytailInstructions(mode: unknown): string {
-  const configuredMode = normalizePersistedMode(mode) || DEFAULT_MODE
-
-  if (INDEPENDENT_MODES.has(configuredMode)) {
-    return (
-      'PONYTAIL MODE ACTIVE — level: ' +
-      configuredMode +
-      '. Behavior defined by /ponytail-' +
-      configuredMode +
-      ' skill.'
-    )
-  }
-
-  const effectiveMode = normalizeMode(configuredMode) || DEFAULT_MODE
+  const effectiveMode = normalizeMode(mode) || DEFAULT_MODE
 
   try {
     return (
@@ -110,8 +58,8 @@ function getPonytailInstructions(mode: unknown): string {
       filterSkillBodyForMode(fs.readFileSync(SKILL_PATH, 'utf8'), effectiveMode)
     )
   } catch {
-    return getFallbackInstructions(effectiveMode)
+    return `PONYTAIL MODE ACTIVE — level: ${effectiveMode}. The ruleset (skills/ponytail/SKILL.md) could not be read: reinstall ponytail.`
   }
 }
 
-export { filterSkillBodyForMode, getFallbackInstructions, getPonytailInstructions }
+export { filterSkillBodyForMode, getPonytailInstructions }

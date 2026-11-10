@@ -36,9 +36,9 @@ test('parsePonytailCommand rejects review as a default (session-only mode, #377)
   })
 })
 
-test('resolveSessionMode still honors review as a session mode (not a default)', () => {
+test('resolveSessionMode ignores a saved review entry: review is a skill, not a level', () => {
   const entries = [{ type: 'custom', customType: 'ponytail-mode', data: { mode: 'review' } }]
-  assert.equal(resolveSessionMode(entries, 'full'), 'review')
+  assert.equal(resolveSessionMode(entries, 'full'), 'full')
 })
 
 test('resolveSessionMode prefers latest persisted session mode', () => {

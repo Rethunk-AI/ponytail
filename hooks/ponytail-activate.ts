@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ponytail — Claude Code SessionStart activation hook (also Codex, Copilot,
 // Grok, CodeBuddy and Cursor sessionStart)
 //
