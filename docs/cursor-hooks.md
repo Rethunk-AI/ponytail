@@ -35,7 +35,7 @@ What the install script does:
   file and also deletes `~/.cursor/.ponytail-active`.
 
 Cursor watches `hooks.json` and reloads it on save; open a new chat afterwards.
-`node` has to be on the PATH Cursor sees. The Hooks tab under Customize and the
+`bun` has to be on the PATH Cursor sees. The Hooks tab under Customize and the
 Hooks output channel show each execution and any parse errors.
 
 ## Contract
@@ -130,7 +130,7 @@ for teammates without hooks stays on the rule's fixed behavior for everyone.
 - On Windows every hook run costs about a second, mostly PowerShell startup
   (measured 1.05 to 1.3 s on 3.20.17). `beforeSubmitPrompt` is awaited, so each
   prompt submission waits that long. macOS and Linux spawn the command directly
-  and pay only node startup.
+  and pay only bun startup.
 - With `CLAUDE_PROJECT_DIR`, mode state is per project, stored in
   `~/.cursor/ponytail-modes/<sha256(normalized project dir)>`. Conversations in
   the same project share that flag; different projects keep separate modes.

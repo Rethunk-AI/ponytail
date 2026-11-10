@@ -2,7 +2,7 @@
 
 Pick your agent below. Not listed? Most agents read [`AGENTS.md`](AGENTS.md): copy it into your project, or ask your agent to install [`skills/ponytail/SKILL.md`](skills/ponytail/SKILL.md) as a skill. Which files map to which agent: [Agent portability](docs/agent-portability.md).
 
-The Claude Code and Codex plugins (and the Cursor hooks) run two tiny Node.js lifecycle hooks, so `node` needs to be on your PATH (note for Nix/nvm users: it must be on the non-interactive shell's PATH). If it isn't, the skills still work, but every hook call shows a harmless `node: command not found` error; installing Node (or putting it on that PATH) makes it go away.
+The Claude Code, Codex, Copilot, Qoder and Cursor hooks are TypeScript run by [Bun](https://bun.sh), so `bun` needs to be on the non-interactive shell's PATH. Without it the skills still work, but every hook call shows a harmless `bun: command not found` error.
 
 ## Claude Code
 
@@ -187,7 +187,7 @@ git clone https://github.com/Rethunk-AI/ponytail
 bun ponytail/scripts/cursor-hooks.ts install
 ```
 
-Merges two native hooks into `~/.cursor/hooks.json` (add `--project` to write `<project>/.cursor/hooks.json` instead) and keeps any hooks you already have there. The entries run `node` from that checkout, so leave it where it is or re-run the install after moving it. Cursor reloads the file on save; open a new chat and the ruleset for your default level arrives through `sessionStart`. Send `/ponytail lite`, `/ponytail full`, `/ponytail ultra` or `/ponytail off` as a plain message to switch the level for the rest of the conversation; `/ponytail` reports it. Cursor's `subagentStart` cannot inject context, so subagents run without the ruleset, and cloud agents never fire `sessionStart`. The always-on rule (`.cursor/rules/ponytail.mdc`) and the hooks are alternatives: while the rule is in a workspace the hooks inject nothing and the mode commands answer with a notice, so delete the rule to let the hooks manage the level. Contract, verification record and limitations: [docs/cursor-hooks.md](docs/cursor-hooks.md). Uninstall: `bun ponytail/scripts/cursor-hooks.ts uninstall`.
+Merges two native hooks into `~/.cursor/hooks.json` (add `--project` to write `<project>/.cursor/hooks.json` instead) and keeps any hooks you already have there. The entries run `bun` on that checkout's hooks, so leave it where it is or re-run the install after moving it. Cursor reloads the file on save; open a new chat and the ruleset for your default level arrives through `sessionStart`. Send `/ponytail lite`, `/ponytail full`, `/ponytail ultra` or `/ponytail off` as a plain message to switch the level for the rest of the conversation; `/ponytail` reports it. Cursor's `subagentStart` cannot inject context, so subagents run without the ruleset, and cloud agents never fire `sessionStart`. The always-on rule (`.cursor/rules/ponytail.mdc`) and the hooks are alternatives: while the rule is in a workspace the hooks inject nothing and the mode commands answer with a notice, so delete the rule to let the hooks manage the level. Contract, verification record and limitations: [docs/cursor-hooks.md](docs/cursor-hooks.md). Uninstall: `bun ponytail/scripts/cursor-hooks.ts uninstall`.
 
 ## Settings
 
