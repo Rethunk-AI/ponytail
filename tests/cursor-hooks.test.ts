@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Cursor adapter compatibility check (#817). The hooks must speak Cursor's
 // hooks.json contract: camelCase events, JSON on stdout (empty stdout is a
 // no-op, raw text is a parse error), `additional_context` on sessionStart, and
@@ -45,7 +44,9 @@ for (const key of [
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ponytail-cursor-'))
 process.on('exit', () => fs.rmSync(temp, { recursive: true, force: true }))
 
-function run(script, env, input = '', cwd) {
+type Env = Record<string, string | undefined>
+
+function run(script: string, env: Env, input = '', cwd?: string) {
   return spawnSync(process.execPath, [path.join(root, 'hooks', script)], {
     env: { ...process.env, ...env },
     input,
@@ -54,7 +55,7 @@ function run(script, env, input = '', cwd) {
   })
 }
 
-function cli(args, env, cwd) {
+function cli(args: string[], env: Env, cwd?: string) {
   return spawnSync(process.execPath, [path.join(root, 'scripts', 'cursor-hooks.ts'), ...args], {
     env: { ...process.env, ...env },
     cwd,
@@ -62,7 +63,7 @@ function cli(args, env, cwd) {
   })
 }
 
-function parse(result) {
+function parse(result: ReturnType<typeof run>) {
   assert.equal(result.status, 0, result.stderr)
   assert.ok(
     result.stdout.startsWith('{'),
@@ -74,28 +75,24 @@ function parse(result) {
 // A fresh HOME and workspace per case so flag state cannot leak between cases.
 // The env is what Cursor 3.20.17 gives a hook process: CURSOR_VERSION and the
 // workspace root in CURSOR_PROJECT_DIR (plus its CLAUDE_PROJECT_DIR alias).
-function cursorEnv(name, extra = {}) {
+function cursorEnv(name: string, extra: Env = {}) {
   const home = path.join(temp, name, 'home')
   const project = path.join(temp, name, 'project')
   fs.mkdirSync(home, { recursive: true })
   fs.mkdirSync(project, { recursive: true })
-  return {
-    home,
-    project,
-    flag: path.join(home, '.cursor', '.ponytail-active'),
-    env: {
-      HOME: home,
-      USERPROFILE: home,
-      XDG_CONFIG_HOME: path.join(home, '.config'),
-      CURSOR_VERSION: '3.20.17',
-      CURSOR_PROJECT_DIR: project,
-      CLAUDE_PROJECT_DIR: project,
-      ...extra,
-    },
+  const env: Env = {
+    HOME: home,
+    USERPROFILE: home,
+    XDG_CONFIG_HOME: path.join(home, '.config'),
+    CURSOR_VERSION: '3.20.17',
+    CURSOR_PROJECT_DIR: project,
+    CLAUDE_PROJECT_DIR: project,
+    ...extra,
   }
+  return { home, project, flag: path.join(home, '.cursor', '.ponytail-active'), env }
 }
 
-function writeFlag(c, mode) {
+function writeFlag(c: { flag: string }, mode: string) {
   fs.mkdirSync(path.dirname(c.flag), { recursive: true })
   fs.writeFileSync(c.flag, mode)
 }
@@ -103,7 +100,10 @@ function writeFlag(c, mode) {
 test('cursor hooks template is a valid hooks.json with the two events that can inject context', () => {
   const config = JSON.parse(fs.readFileSync(path.join(root, TEMPLATE), 'utf8'))
   assert.equal(config.version, 1)
-  assert.deepEqual(Object.keys(config.hooks).sort(), ['beforeSubmitPrompt', 'sessionStart'])
+  assert.deepEqual(
+    Object.keys(config.hooks).sort((a, b) => a.localeCompare(b)),
+    ['beforeSubmitPrompt', 'sessionStart'],
+  )
   assert.match(config.hooks.sessionStart[0].command, /ponytail-activate\.ts/)
   assert.match(config.hooks.beforeSubmitPrompt[0].command, /ponytail-mode-tracker\.ts/)
   // subagentStart answers only permission/user_message in Cursor, so it must
@@ -123,7 +123,7 @@ test('cursor hooks template is a valid hooks.json with the two events that can i
         'must run under cmd, PowerShell and bash alike',
       )
       assert.equal(typeof entry.timeout, 'number')
-      const script = entry.command.match(/hooks\/([\w.-]+\.ts)/)[1]
+      const script = /hooks\/([\w.-]+\.ts)/.exec(entry.command)?.[1] ?? ''
       assert.ok(
         fs.existsSync(path.join(root, 'hooks', script)),
         `command references a missing hook script: ${script}`,
@@ -313,9 +313,12 @@ test('with the always-on rule in the workspace the hooks step back instead of du
   assert.equal(plain.stdout, '', 'ordinary prompts stay silent')
 
   // Project hooks run from the workspace root: the cwd fallback must find the rule too.
-  delete c.env.CURSOR_PROJECT_DIR
-  delete c.env.CLAUDE_PROJECT_DIR
-  const viaCwd = parse(run('ponytail-activate.ts', c.env, '', c.project))
+  const {
+    CURSOR_PROJECT_DIR: _cursorDir,
+    CLAUDE_PROJECT_DIR: _claudeDir,
+    ...envWithoutProject
+  } = c.env
+  const viaCwd = parse(run('ponytail-activate.ts', envWithoutProject, '', c.project))
   assert.match(viaCwd.additional_context, /always-on Cursor rule/)
 })
 
@@ -351,11 +354,11 @@ test('installer merges into an existing ~/.cursor/hooks.json and leaves unrelate
   )
   assert.equal(config.hooks.sessionStart.length, 2)
   assert.deepEqual(config.hooks.sessionStart[1], {
-    command: `node "${rootFwd}/hooks/ponytail-activate.ts"`,
+    command: `bun "${rootFwd}/hooks/ponytail-activate.ts"`,
     timeout: 15,
   })
   assert.deepEqual(config.hooks.beforeSubmitPrompt, [
-    { command: `node "${rootFwd}/hooks/ponytail-mode-tracker.ts"`, timeout: 15 },
+    { command: `bun "${rootFwd}/hooks/ponytail-mode-tracker.ts"`, timeout: 15 },
   ])
 
   // Idempotent: a second install replaces ponytail's entries, never duplicates them.
@@ -382,7 +385,10 @@ test('installer creates the file when absent and removes it again when only pony
   assert.match(result.stdout, /Installed ponytail hooks in /)
   const config = JSON.parse(fs.readFileSync(file, 'utf8'))
   assert.equal(config.version, 1)
-  assert.deepEqual(Object.keys(config.hooks).sort(), ['beforeSubmitPrompt', 'sessionStart'])
+  assert.deepEqual(
+    Object.keys(config.hooks).sort((a, b) => a.localeCompare(b)),
+    ['beforeSubmitPrompt', 'sessionStart'],
+  )
 
   result = cli(['uninstall'], env)
   assert.equal(result.status, 0, result.stderr)
