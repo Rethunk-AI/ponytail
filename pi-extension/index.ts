@@ -20,7 +20,7 @@ interface PiTheme {
   fg(color: string, text: string): string
 }
 
-interface PiContext {
+export interface PiContext {
   ui?: {
     theme?: PiTheme
     setStatus?(key: string, text: string | undefined): void
@@ -46,19 +46,19 @@ interface BeforeAgentStartEvent {
   systemPromptOptions?: { sections?: Record<string, string> }
 }
 
-interface SystemPromptResult {
+export interface SystemPromptResult {
   systemPrompt: string | string[]
 }
 
 interface PiCommand {
   description: string
-  getArgumentCompletions?(prefix: string): unknown
+  getArgumentCompletions?(prefix: string): { value: string; label: string }[] | null
   handler(args: string, ctx: PiContext): void | Promise<void>
 }
 
 type SessionEventName = 'session_tree' | 'session_switch' | 'session_branch'
 
-interface PiApi {
+export interface PiApi {
   on(event: 'input', handler: (event: InputEvent | undefined, ctx: PiContext) => void): void
   on(
     event: 'before_agent_start',
