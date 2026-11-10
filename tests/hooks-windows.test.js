@@ -114,7 +114,7 @@ for (const script of ['ponytail-mode-tracker.js', 'ponytail-activate.js']) {
     const hook = path.join(root, 'hooks', script);
     // A throwaway home: the activate fallback writes the flag and the statusline copy.
     const home = fs.mkdtempSync(path.join(os.tmpdir(), 'ponytail-stdin-'));
-    const env = { ...process.env, HOME: home, USERPROFILE: home, CLAUDE_CONFIG_DIR: path.join(home, '.claude'), PONYTAIL_MAP: '0' };
+    const env = { ...process.env, HOME: home, USERPROFILE: home, CLAUDE_CONFIG_DIR: path.join(home, '.claude') };
     // stdin is a pipe we never write to or end, reproducing the deadlock.
     const child = spawn(process.execPath, [hook], { env, stdio: ['pipe', 'ignore', 'ignore'] });
 
