@@ -135,7 +135,7 @@ for teammates without hooks stays on the rule's fixed behavior for everyone.
   `~/.cursor/ponytail-modes/<sha256(normalized project dir)>`. Conversations in
   the same project share that flag; different projects keep separate modes.
   Without a project directory, the runtime uses `~/.cursor/.ponytail-active`.
-  That shared flag is also maintained as a compatibility/statusline mirror
+  That shared flag is also maintained as a compatibility mirror
   and follows the last mode change.
 - The `beforeSubmitPrompt` injection field is not on the docs page. If a future
   Cursor build drops it, level switches would still update the flag but nothing

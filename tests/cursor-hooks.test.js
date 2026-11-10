@@ -123,7 +123,7 @@ test('sessionStart injects the default-level ruleset as additional_context and k
   const input = JSON.stringify({
     hook_event_name: 'sessionStart', conversation_id: 'conv-1', session_id: 'conv-1',
     is_background_agent: false, composer_mode: 'agent', workspace_roots: [c.project],
-    cursor_version: '3.20.17', model: 'claude-opus-4-7-thinking-max',
+    cursor_version: '3.20.17', model: 'claude-opus-5-5',
   });
   const output = parse(run('ponytail-activate.js', c.env, input));
   assert.deepEqual(Object.keys(output), ['additional_context']);

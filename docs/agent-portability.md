@@ -8,7 +8,7 @@ to load in a given agent.
 
 | Host | Files | Notes |
 |------|-------|-------|
-| Claude Code | `.claude-plugin/plugin.json`, `commands/`, `hooks/claude-codex-hooks.json`, `hooks/` | Full plugin install with session activation, mode tracking, commands, and statusline support. |
+| Claude Code | `.claude-plugin/plugin.json`, `commands/`, `hooks/claude-codex-hooks.json`, `hooks/` | Full plugin install with session activation, mode tracking and commands. |
 | Codex | `.codex-plugin/plugin.json`, `hooks/claude-codex-hooks.json`, `hooks/`, `skills/` | Plugin install with the same skills plus lifecycle hooks for activation and mode tracking. |
 | Devin CLI | `.devin-plugin/plugin.json`, `skills/` | `devin plugins install DietrichGebert/ponytail` installs ponytail as a Devin plugin; skills are available as `/ponytail:ponytail`, `/ponytail:ponytail-review`, and so on. |
 | CodeBuddy | `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `hooks/claude-codex-hooks.json`, `hooks/`, `skills/` | CodeBuddy Code reads the Claude-format manifests when no `.codebuddy-plugin/` exists and expands `${CLAUDE_PLUGIN_ROOT}` in hook commands, so `/plugin marketplace add DietrichGebert/ponytail` + `/plugin install ponytail@ponytail` installs the Claude plugin unchanged. The hooks detect it by `CODEBUDDY_PLUGIN_ROOT`, keep the mode flag in `$CODEBUDDY_CONFIG_DIR` or `~/.codebuddy`, and answer in `hookSpecificOutput` JSON. No subagent injection: CodeBuddy discards `SubagentStart` hook output. Verified with CodeBuddy CLI 2.161.2. |

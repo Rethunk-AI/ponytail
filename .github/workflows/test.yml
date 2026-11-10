@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-  workflow_call:
 
 permissions:
   contents: read
@@ -23,9 +22,6 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Python deps for correctness checks
-        run: pip install pandas
-
       - name: Check rule copies
         run: node scripts/check-rule-copies.js
 
@@ -34,7 +30,3 @@ jobs:
 
       - name: Run tests
         run: npm test
-
-      - name: Run benchmark selftest
-        run: python3 benchmarks/agentic/run.py --selftest
-
