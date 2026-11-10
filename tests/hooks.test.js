@@ -37,6 +37,8 @@ delete process.env.PLUGIN_DATA;
 delete process.env.COPILOT_PLUGIN_DATA;
 // A leaked subagent matcher would scope the inject-into-every-subagent assertions.
 delete process.env.PONYTAIL_SUBAGENT_MATCHER;
+// A shell default level would override the levels each case sets up.
+delete process.env.PONYTAIL_DEFAULT_MODE;
 delete process.env.QODER_SESSION_ID;
 // A leaked project dir would move the flag into ponytail-modes/ (#662).
 delete process.env.CLAUDE_PROJECT_DIR;
