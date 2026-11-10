@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Every ponytail command the pi extension registers must also ship as a
 // file-based command for the hosts that need one: Claude Code (commands/*.toml,
 // which Gemini CLI reuses) and OpenCode (.opencode/command/*.md). /ponytail-help
@@ -17,7 +16,9 @@ const root = path.join(import.meta.dirname, '..')
 
 // pi-extension registers the canonical command set.
 const piSource = fs.readFileSync(path.join(root, 'pi-extension', 'index.ts'), 'utf8')
-const commands = [...piSource.matchAll(/registerCommand\(["']([\w-]+)["']/g)].map((m) => m[1])
+const commands = [...piSource.matchAll(/registerCommand\(["']([\w-]+)["']/g)].flatMap((m) =>
+  m[1] === undefined ? [] : [m[1]],
+)
 
 test('pi registers at least the base command', () => {
   assert.ok(commands.includes('ponytail'), 'expected pi to register a ponytail command')
@@ -51,7 +52,7 @@ const debtCopies = [
   'commands/ponytail-debt.toml',
   '.opencode/command/ponytail-debt.md',
 ]
-const debtSamples = [
+const debtSamples: [string, boolean][] = [
   ['# ponytail: hash marker', true],
   ['#ponytail: hash marker, no space', true],
   ['// ponytail: slash marker', true],
@@ -62,7 +63,11 @@ const debtSamples = [
   ['prose that merely mentions ponytail: markers stays out of the ledger', false],
 ]
 
-test('every ponytail-debt copy greps #, // and /* markers but not prose', (t) => {
+// Probe once so a missing tool skips the spawn tests instead of failing them.
+const hasGrep = spawnSync('grep', ['--version']).error === undefined
+const hasShAndGit = spawnSync('sh', ['-c', 'git --version'], { encoding: 'utf8' }).status === 0
+
+test.skipIf(!hasGrep)('every ponytail-debt copy greps #, // and /* markers but not prose', () => {
   const input = `${debtSamples.map(([line]) => line).join('\n')}\n`
   const expected = debtSamples.flatMap(([line, hit], i) => (hit ? [`${i + 1}:${line}`] : []))
 
@@ -70,7 +75,7 @@ test('every ponytail-debt copy greps #, // and /* markers but not prose', (t) =>
     const documented = fs
       .readFileSync(path.join(root, rel), 'utf8')
       .match(/git grep [^']*-nE '([^']+)'/)
-    assert.ok(documented, `${rel} no longer documents a git grep ... -nE '<pattern>'`)
+    assert.ok(documented?.[1], `${rel} no longer documents a git grep ... -nE '<pattern>'`)
 
     const result = spawnSync('grep', ['-nE', documented[1]], {
       input,
@@ -78,9 +83,6 @@ test('every ponytail-debt copy greps #, // and /* markers but not prose', (t) =>
       timeout: 5000,
     })
     if (result.error) {
-      if (result.error.code === 'ENOENT') {
-        return t.skip('grep not available on this platform')
-      }
       throw result.error
     }
     assert.equal(result.status, 0, `grep failed for ${rel}: ${result.stderr}`)
@@ -93,20 +95,22 @@ test('every ponytail-debt copy greps #, // and /* markers but not prose', (t) =>
 })
 
 // The full documented command must skip .git and whatever .gitignore ignores, in any stack (#948, #1100).
-test('the ponytail-debt scan skips .git and ignored dirs like node_modules, dist, build and .next', (t) => {
-  const cmd = fs
-    .readFileSync(path.join(root, 'skills/ponytail-debt/SKILL.md'), 'utf8')
-    .match(/`(git grep [^`]+)`/)[1]
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ponytail-debt-'))
-  for (const sub of ['src', '.git', 'node_modules/pkg', 'dist', 'build', '.next']) {
-    fs.mkdirSync(path.join(dir, sub), { recursive: true })
-    fs.writeFileSync(path.join(dir, sub, 'a.js'), '// ponytail: marker\n')
-  }
-  fs.writeFileSync(path.join(dir, '.gitignore'), 'node_modules/\ndist/\nbuild/\n.next/\n')
-  const result = spawnSync('sh', ['-c', cmd], { cwd: dir, encoding: 'utf8', timeout: 5000 })
-  fs.rmSync(dir, { recursive: true, force: true })
-  if (result.error || result.status === 127) {
-    return t.skip(`sh/git not available: ${result.error ? result.error.code : result.stderr}`)
-  }
-  assert.deepEqual(result.stdout.split('\n').filter(Boolean), ['src/a.js:1:// ponytail: marker'])
-})
+test.skipIf(!hasShAndGit)(
+  'the ponytail-debt scan skips .git and ignored dirs like node_modules, dist, build and .next',
+  () => {
+    const documented = fs
+      .readFileSync(path.join(root, 'skills/ponytail-debt/SKILL.md'), 'utf8')
+      .match(/`(git grep [^`]+)`/)
+    const cmd = documented?.[1]
+    assert.ok(cmd, 'skills/ponytail-debt/SKILL.md no longer documents a `git grep ...` command')
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ponytail-debt-'))
+    for (const sub of ['src', '.git', 'node_modules/pkg', 'dist', 'build', '.next']) {
+      fs.mkdirSync(path.join(dir, sub), { recursive: true })
+      fs.writeFileSync(path.join(dir, sub, 'a.js'), '// ponytail: marker\n')
+    }
+    fs.writeFileSync(path.join(dir, '.gitignore'), 'node_modules/\ndist/\nbuild/\n.next/\n')
+    const result = spawnSync('sh', ['-c', cmd], { cwd: dir, encoding: 'utf8', timeout: 5000 })
+    fs.rmSync(dir, { recursive: true, force: true })
+    assert.deepEqual(result.stdout.split('\n').filter(Boolean), ['src/a.js:1:// ponytail: marker'])
+  },
+)

@@ -1,5 +1,4 @@
-#!/usr/bin/env node
-// The README tells users to run `node scripts/uninstall.ts`, so the npm package
+// The README tells users to run `bun scripts/uninstall.ts`, so the npm package
 // must actually ship it. Guard the files entry so it can't silently drop out.
 
 import { test } from 'bun:test'

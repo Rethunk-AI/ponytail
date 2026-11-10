@@ -38,7 +38,7 @@ const RULE_INVARIANTS = [
   'shortcut: <the limit>, <when to upgrade>',
 ]
 
-function read(relPath) {
+function read(relPath: string): string {
   return fs.readFileSync(path.join(root, relPath), 'utf8')
 }
 

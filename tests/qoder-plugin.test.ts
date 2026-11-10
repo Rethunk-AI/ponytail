@@ -19,7 +19,7 @@ const SKILL_DIRS = [
   'ponytail-help',
 ]
 
-function readJSON(relPath) {
+function readJSON(relPath: string) {
   return JSON.parse(fs.readFileSync(path.join(root, relPath), 'utf8'))
 }
 

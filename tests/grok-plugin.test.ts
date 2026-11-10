@@ -27,10 +27,11 @@ test('Ponytail skill describes every coding task for Grok auto-invocation', () =
 })
 
 test('Grok marketplace resolves a subdirectory with the same skills as direct installation', () => {
-  const catalog = JSON.parse(
+  const catalog: { plugins: { name: string; source: string }[] } = JSON.parse(
     fs.readFileSync(path.join(root, '.grok-plugin', 'marketplace.json'), 'utf8'),
   )
   const entry = catalog.plugins.find((plugin) => plugin.name === 'ponytail')
+  assert.ok(entry, 'marketplace lists no ponytail plugin')
   const pluginRoot = path.resolve(root, entry.source)
   // Grok rejects a marketplace source of "./", even though direct installation works.
   assert.notEqual(pluginRoot, root, 'marketplace source must name a subdirectory')

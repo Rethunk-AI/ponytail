@@ -18,7 +18,7 @@ const REQUIRED_COMMAND_FILES = [
   'ponytail-help.toml',
 ]
 
-function readJSON(relPath) {
+function readJSON(relPath: string) {
   return JSON.parse(fs.readFileSync(path.join(root, relPath), 'utf8'))
 }
 
