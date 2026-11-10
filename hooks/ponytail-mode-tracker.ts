@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ponytail — UserPromptSubmit hook to track which ponytail mode is active
 // Inspects user input for /ponytail commands and writes mode to flag file
 
@@ -54,10 +53,19 @@ function deactivate(state: TurnState): void {
 // restarts). Plain switches stay session-scoped ("sticks until session
 // end"), so this is the only path that writes config. review is not a
 // valid default (#377), so only off/lite/full/ultra are accepted.
+function saveFailure(what: string, error: unknown): string {
+  const reason = error instanceof Error ? error.message : String(error)
+  return `PONYTAIL: could not save the ${what} (${reason}). Nothing changed.`
+}
+
 function handleDefault(dmode: string | undefined, state: TurnState): void {
   if (dmode === 'off' || dmode === 'lite' || dmode === 'full' || dmode === 'ultra') {
-    writeDefaultMode(dmode)
-    state.defaultNotice = `PONYTAIL DEFAULT SET — new sessions start in ${dmode}.`
+    try {
+      writeDefaultMode(dmode)
+      state.defaultNotice = `PONYTAIL DEFAULT SET — new sessions start in ${dmode}.`
+    } catch (error) {
+      state.defaultNotice = saveFailure('default level', error)
+    }
     if (!isQoder) {
       writeHookOutput('UserPromptSubmit', dmode, state.defaultNotice)
     }
@@ -82,7 +90,15 @@ function resolveSwitch(arg: string): Switch {
 }
 
 function applySwitch(mode: string, state: TurnState): void {
-  setMode(mode)
+  try {
+    setMode(mode)
+  } catch (error) {
+    state.defaultNotice = saveFailure('level', error)
+    if (!isQoder) {
+      writeHookOutput('UserPromptSubmit', mode, state.defaultNotice)
+    }
+    return
+  }
   state.modeSwitched = true
   // ponytail: Qoder needs the full ruleset every turn, so when a mode
   // switch happens we fold the confirmation into the ruleset output

@@ -788,6 +788,26 @@ test('/ponytail default persists while plain switches stay session-scoped', () =
   )
 })
 
+test('/ponytail default leaves an unparseable config untouched and says so', () => {
+  const badHome = path.join(temp, 'bad-config-home')
+  const configFile = path.join(badHome, '.config', 'ponytail', 'config.json')
+  fs.mkdirSync(path.dirname(configFile), { recursive: true })
+  const bad = '{"quietStartup": true,}'
+  fs.writeFileSync(configFile, bad)
+  const result = run(
+    'ponytail-mode-tracker.ts',
+    { HOME: badHome, USERPROFILE: badHome, XDG_CONFIG_HOME: '' },
+    JSON.stringify({ prompt: '/ponytail default ultra' }),
+  )
+  assert.equal(result.status, 0, result.stderr)
+  assert.equal(
+    fs.readFileSync(configFile, 'utf8'),
+    bad,
+    'a config that does not parse must not be overwritten',
+  )
+  assert.match(result.stdout, /could not save the default level/)
+})
+
 // review must be refused as a default by the config functions too, not only the
 // mode-tracker command path (#377): writing it is a no-op, and a stray
 // PONYTAIL_DEFAULT_MODE=review falls back to the built-in default.

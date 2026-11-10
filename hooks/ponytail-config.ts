@@ -185,8 +185,11 @@ function writeDefaultMode(mode: unknown): string | null {
   let config: PonytailConfig = {}
   try {
     config = readConfig()
-  } catch {
-    // Missing or unparseable config: start from an empty one
+  } catch (error) {
+    // Only a missing file starts fresh: rewriting an unparseable one would drop the user's other settings.
+    if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) {
+      throw error
+    }
   }
   config.defaultMode = normalized
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8')
