@@ -1,0 +1,12 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "hooks/ponytail-*.ts",
+    "scripts/*.ts",
+    "tests/**/*.test.ts",
+    "pi-extension/index.ts",
+    "pi-extension/test/**/*.test.ts",
+    ".opencode/plugins/*.ts"
+  ],
+  "project": ["hooks/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts", "pi-extension/**/*.ts", ".opencode/**/*.ts"]
+}

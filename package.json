@@ -1,20 +1,28 @@
 {
-  "name": "@dietrichgebert/ponytail",
+  "name": "@rethunk-ai/ponytail",
   "version": "5.3.3",
   "description": "Lazy senior dev mode for AI agents. The best code is the code you never wrote.",
-  "keywords": ["opencode-plugin", "opencode", "ponytail", "pi-package", "pi", "skills", "qoder"],
+  "keywords": [
+    "opencode-plugin",
+    "opencode",
+    "ponytail",
+    "pi-package",
+    "pi",
+    "skills",
+    "qoder"
+  ],
   "license": "MIT",
   "author": {
     "name": "Dietrich Gebert",
     "url": "https://github.com/DietrichGebert"
   },
-  "homepage": "https://github.com/DietrichGebert/ponytail",
+  "homepage": "https://github.com/Rethunk-AI/ponytail",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DietrichGebert/ponytail.git"
+    "url": "git+https://github.com/Rethunk-AI/ponytail.git"
   },
   "bugs": {
-    "url": "https://github.com/DietrichGebert/ponytail/issues"
+    "url": "https://github.com/Rethunk-AI/ponytail/issues"
   },
   "main": "./.opencode/plugins/ponytail.mjs",
   "exports": {
@@ -35,14 +43,30 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test tests/*.test.js && npm test --prefix pi-extension"
+    "lint": "biome check --error-on-warnings .",
+    "format": "biome check --write .",
+    "typecheck": "tsc -b --noEmit --pretty false",
+    "knip": "knip",
+    "check:rules": "bun scripts/check-rule-copies.ts",
+    "check:versions": "bun scripts/check-versions.ts",
+    "test": "bun test",
+    "ci": "bun run lint && bun run typecheck && bun run knip && bun run check:rules && bun run check:versions && bun run test"
   },
   "pi": {
-    "extensions": ["./pi-extension/index.js"],
-    "skills": ["./skills"]
+    "extensions": [
+      "./pi-extension/index.js"
+    ],
+    "skills": [
+      "./skills"
+    ]
   },
-  "publishConfig": {
-    "access": "public"
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.4.4",
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.6",
+    "@types/bun": "^1.4.4",
+    "knip": "^6.45.0",
+    "typescript": "^7.0.2"
   }
 }
-

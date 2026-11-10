@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    // canon ts-typescript-00001
+    "strict": true,
+
+    // canon ts-typescript-00002
+    "noUncheckedIndexedAccess": true,
+
+    // canon ts-typescript-00003
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
+
+    // canon ts-typescript-00004
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // canon ts-typescript-00005
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+
+    // canon ts-typescript-00006
+    "erasableSyntaxOnly": true,
+    "useDefineForClassFields": true,
+
+    // canon ts-typescript-00007
+    "noUncheckedSideEffectImports": true,
+
+    // canon ts-typescript-00008
+    "skipLibCheck": true,
+
+    // canon ts-typescript-00009
+    "noEmit": true,
+
+    // canon ts-typescript-00010
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+
+    // canon ts-typescript-00011
+    "resolveJsonModule": true,
+
+    // canon ts-typescript-00012
+    "esModuleInterop": true,
+
+    // canon ts-typescript-00013
+    "allowJs": false,
+
+    // canon ts-typescript-00015
+    "incremental": true
+  },
+  // Hooks, scripts and host plugins run as TypeScript under Bun; no emit, so tests sit beside them.
+  "include": ["hooks", "scripts", "tests", "pi-extension", ".opencode"]
+}

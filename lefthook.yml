@@ -1,0 +1,11 @@
+# Cost split: gitleaks is cheap enough for every commit; the full gate is not.
+# pre-push runs `gate` so local and CI cannot drift. gitleaks stays off that path.
+pre-commit:
+  jobs:
+    - name: gitleaks
+      run: gitleaks git --pre-commit --staged --redact --no-banner --log-level warn
+
+pre-push:
+  jobs:
+    - name: gate
+      run: gate
