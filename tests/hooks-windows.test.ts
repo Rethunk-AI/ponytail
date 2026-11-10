@@ -1,14 +1,13 @@
-#!/usr/bin/env node
 // Regression test for issues #19 and #593: on Windows the lifecycle hooks run
 // via PowerShell, so the shared `command` field must be cross-platform (plain
-// `node`, no bash-only syntax). commandWindows is not part of the supported
+// `bun`, no bash-only syntax). commandWindows is not part of the supported
 // hooks schema on the Claude.ai plugin marketplace validator, so it is omitted
-// — plain `node -e "..."` works everywhere without relying on shell-specific
+// — plain `bun -e "..."` works everywhere without relying on shell-specific
 // variable syntax (see #824: the command text used to embed a
 // ${CLAUDE_PLUGIN_ROOT} placeholder that the *host* substitutes textually
 // before the shell parses the command, which is unsafe if the substituted
 // value carries shell metacharacters — the fixed command instead reads
-// process.env.CLAUDE_PLUGIN_ROOT from inside Node, so the shell never
+// process.env.CLAUDE_PLUGIN_ROOT from inside the runtime, so the shell never
 // re-parses the plugin root at all).
 //
 // The hook also has to point at a script that actually ships in hooks/.
@@ -28,7 +27,7 @@ const HOST_PLUGIN_MANIFESTS = ['.claude-plugin/plugin.json', '.codex-plugin/plug
 // PowerShell 5.1 rejects these POSIX shell guards when a host runs `command`.
 const POSIX_GUARD_SYNTAX = /\bcommand\s+-v\b|&&|\|\||>\/dev\/null|2>&1/
 // Pull the hooks/<script> a command launches, so we can check it exists.
-const HOOK_SCRIPT = /hooks[\\/]([\w.-]+\.(?:js|mjs|cjs|ps1|sh))/
+const HOOK_SCRIPT = /hooks[\\/]([\w.-]+\.(?:ts|ps1|sh))/
 // #824: a plugin-root placeholder textually interpolated into shell command
 // text is unsafe — the host substitutes it before the shell parses the
 // command, so a hostile install path can break out of the quoting.
@@ -36,15 +35,24 @@ const PLUGIN_ROOT_PLACEHOLDER = /\$\{(?:CLAUDE_)?PLUGIN_ROOT\}/
 
 // Read inside each case so a missing/malformed file fails as a clean assertion,
 // not a load-time crash.
-function commandHooks() {
-  const config = JSON.parse(fs.readFileSync(path.join(root, HOOKS_JSON), 'utf8'))
+interface CommandHook {
+  command?: string
+  commandWindows?: unknown
+}
+
+function commandHooks(): CommandHook[] {
+  const config: { hooks: Record<string, { hooks: CommandHook[] }[]> } = JSON.parse(
+    fs.readFileSync(path.join(root, HOOKS_JSON), 'utf8'),
+  )
   return Object.values(config.hooks)
     .flat()
     .flatMap((entry) => entry.hooks)
 }
 
-function copilotCommands() {
-  const config = JSON.parse(fs.readFileSync(path.join(root, COPILOT_HOOKS_JSON), 'utf8'))
+function copilotCommands(): (string | undefined)[] {
+  const config: { hooks: Record<string, { bash?: string; powershell?: string }[]> } = JSON.parse(
+    fs.readFileSync(path.join(root, COPILOT_HOOKS_JSON), 'utf8'),
+  )
   return Object.values(config.hooks)
     .flat()
     .flatMap((entry) => [entry.bash, entry.powershell])
@@ -66,9 +74,7 @@ test('hooks.json omits commandWindows for marketplace validation (#593)', () => 
 })
 
 test('shared hook commands avoid POSIX-only guard syntax', () => {
-  const commands = commandHooks()
-    .map((h) => h.command)
-    .filter(Boolean)
+  const commands = commandHooks().flatMap((h) => (h.command ? [h.command] : []))
   assert.ok(commands.length > 0, 'expected at least one shared command entry')
   for (const cmd of commands) {
     assert.doesNotMatch(cmd, POSIX_GUARD_SYNTAX, `command uses POSIX-only guard syntax: ${cmd}`)
@@ -80,14 +86,12 @@ test('shared hook commands avoid POSIX-only guard syntax', () => {
 // `command` through PowerShell on Windows regardless of the commandWindows
 // field — VS Code Copilot always does (it never reads commandWindows), and
 // native Claude Code launched from Git Bash was seen doing the same. `exec
-// node ...` then dies on its first token with CommandNotFoundException, so
-// every hook fails on Windows. Plain `node ...` runs natively in both bash and
+// bun ...` then dies on its first token with CommandNotFoundException, so
+// every hook fails on Windows. Plain `bun ...` runs natively in both bash and
 // PowerShell. The wrapper-process pileup that #461 originally used `exec` to
 // avoid is handled separately by each hook's stdin self-exit guard (#443/#477).
 test('shared hook commands are shell-agnostic (no bash-only exec prefix)', () => {
-  const commands = commandHooks()
-    .map((h) => h.command)
-    .filter(Boolean)
+  const commands = commandHooks().flatMap((h) => (h.command ? [h.command] : []))
   assert.ok(commands.length > 0, 'expected at least one shared command entry')
   for (const cmd of commands) {
     assert.doesNotMatch(
@@ -97,8 +101,8 @@ test('shared hook commands are shell-agnostic (no bash-only exec prefix)', () =>
     )
     assert.match(
       cmd,
-      /^node\s+/,
-      `command must invoke node directly so it runs in both bash and PowerShell: ${cmd}`,
+      /^bun\s+/,
+      `command must invoke bun directly so it runs in both bash and PowerShell: ${cmd}`,
     )
     assert.doesNotMatch(
       cmd,
@@ -110,11 +114,13 @@ test('shared hook commands are shell-agnostic (no bash-only exec prefix)', () =>
 
 test('every hook command points at a script that ships in hooks/', () => {
   for (const hook of commandHooks()) {
-    const cmd = hook.command
-    const match = cmd.match(HOOK_SCRIPT)
-    assert.ok(match, `cannot find a hooks/ script in command: ${cmd}`)
-    const script = path.join(root, 'hooks', match[1])
-    assert.ok(fs.existsSync(script), `command references a missing hook script: ${match[1]}`)
+    const cmd = hook.command ?? ''
+    const name = HOOK_SCRIPT.exec(cmd)?.[1]
+    assert.ok(name, `cannot find a hooks/ script in command: ${cmd}`)
+    assert.ok(
+      fs.existsSync(path.join(root, 'hooks', name)),
+      `command references a missing hook script: ${name}`,
+    )
   }
 })
 
@@ -137,7 +143,7 @@ for (const script of ['ponytail-mode-tracker.ts', 'ponytail-activate.ts']) {
     // stdin is a pipe we never write to or end, reproducing the deadlock.
     const child = spawn(process.execPath, [hook], { env, stdio: ['pipe', 'ignore', 'ignore'] })
 
-    const code = await new Promise((resolve, reject) => {
+    const code = await new Promise<number | null>((resolve, reject) => {
       const guard = setTimeout(() => {
         child.kill('SIGKILL')
         reject(new Error('hook hung on open stdin — it would freeze the session'))
@@ -155,12 +161,12 @@ for (const script of ['ponytail-mode-tracker.ts', 'ponytail-activate.ts']) {
 }
 
 test('Claude and Codex manifests point at the shared host-specific hook config', () => {
-  const expected = {
+  const expected: Record<string, string | string[]> = {
     '.claude-plugin/plugin.json': [`./${HOOKS_JSON}`],
     '.codex-plugin/plugin.json': `./${HOOKS_JSON}`,
   }
   for (const rel of HOST_PLUGIN_MANIFESTS) {
-    const manifest = JSON.parse(fs.readFileSync(path.join(root, rel), 'utf8'))
+    const manifest: { hooks?: unknown } = JSON.parse(fs.readFileSync(path.join(root, rel), 'utf8'))
     assert.deepEqual(
       manifest.hooks,
       expected[rel],
@@ -175,9 +181,7 @@ test('Claude and Codex manifests point at the shared host-specific hook config',
 // quoting. Commands must instead have the invoked script read the root from
 // its own process.env.
 test('claude-codex-hooks.json commands contain no plugin-root placeholder', () => {
-  const commands = commandHooks()
-    .map((h) => h.command)
-    .filter(Boolean)
+  const commands = commandHooks().flatMap((h) => (h.command ? [h.command] : []))
   assert.ok(commands.length > 0, 'expected at least one shared command entry')
   for (const cmd of commands) {
     assert.doesNotMatch(
@@ -189,7 +193,7 @@ test('claude-codex-hooks.json commands contain no plugin-root placeholder', () =
 })
 
 test('copilot-hooks.json commands contain no plugin-root placeholder', () => {
-  const commands = copilotCommands().filter(Boolean)
+  const commands = copilotCommands().filter((c): c is string => Boolean(c))
   assert.ok(commands.length > 0, 'expected at least one copilot command entry')
   for (const cmd of commands) {
     assert.doesNotMatch(
@@ -211,7 +215,9 @@ test('copilot-hooks.json commands contain no plugin-root placeholder', () => {
 // substitute, so the hostile value never reaches shell text at all.
 test('a hostile plugin root cannot inject shell commands via host-side textual substitution (#824)', () => {
   const isWindows = process.platform === 'win32'
-  const commands = [...commandHooks().map((h) => h.command), ...copilotCommands()].filter(Boolean)
+  const commands = [...commandHooks().map((h) => h.command), ...copilotCommands()].filter(
+    (c): c is string => Boolean(c),
+  )
   assert.ok(commands.length > 0, 'expected at least one command to check')
 
   const marker = path.join(os.tmpdir(), `ponytail-824-marker-${process.pid}`)
