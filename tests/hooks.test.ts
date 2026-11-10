@@ -414,6 +414,12 @@ test('SubagentStart injects into subagents on Claude and Codex and stays silent 
   assert.equal(output.hookSpecificOutput.hookEventName, 'SubagentStart')
   assert.match(output.hookSpecificOutput.additionalContext, /PONYTAIL MODE ACTIVE — level: full/)
 
+  // Ultra stays in the main thread: subagents get full.
+  fs.writeFileSync(subFlag, 'ultra')
+  result = run('ponytail-subagent.ts', subEnv)
+  output = JSON.parse(result.stdout)
+  assert.match(output.hookSpecificOutput.additionalContext, /PONYTAIL MODE ACTIVE — level: full/)
+
   // No flag → ponytail off → inject nothing (empty stdout, no failure).
   fs.unlinkSync(subFlag)
   result = run('ponytail-subagent.ts', subEnv)
@@ -560,10 +566,10 @@ test('Qoder tracker initializes, switches, persists off and injects subagents', 
   result = run(
     'ponytail-mode-tracker.ts',
     qoderCustomEnv,
-    JSON.stringify({ prompt: '/ponytail ultra' }),
+    JSON.stringify({ prompt: '/ponytail lite' }),
   )
   assert.equal(result.status, 0, result.stderr)
-  assert.equal(fs.readFileSync(qoderCustomState, 'utf8'), 'ultra')
+  assert.equal(fs.readFileSync(qoderCustomState, 'utf8'), 'lite')
   assert.equal(
     fs.readFileSync(qoderState, 'utf8'),
     'full',
@@ -573,7 +579,7 @@ test('Qoder tracker initializes, switches, persists off and injects subagents', 
   assert.equal(result.status, 0, result.stderr)
   assert.match(
     JSON.parse(result.stdout).hookSpecificOutput.additionalContext,
-    /PONYTAIL MODE ACTIVE — level: ultra/,
+    /PONYTAIL MODE ACTIVE — level: lite/,
   )
 
   // Bare `/ponytail` on Qoder is report-only: there's no SessionStart, so the
@@ -969,14 +975,14 @@ test('per-project mode flags stay independent', () => {
   assert.equal(subagentLevel(repoA), 'full', 'an off session in repo B must not clear repo A')
   assert.equal(subagentLevel(repoB), null, 'repo B is off')
 
-  run('ponytail-mode-tracker.ts', repoA, JSON.stringify({ prompt: '/ponytail ultra' }))
-  run('ponytail-mode-tracker.ts', repoB, JSON.stringify({ prompt: '/ponytail lite' }))
-  assert.equal(subagentLevel(repoA), 'ultra')
-  assert.equal(subagentLevel(repoB), 'lite')
+  run('ponytail-mode-tracker.ts', repoA, JSON.stringify({ prompt: '/ponytail lite' }))
+  run('ponytail-mode-tracker.ts', repoB, JSON.stringify({ prompt: '/ponytail full' }))
+  assert.equal(subagentLevel(repoA), 'lite')
+  assert.equal(subagentLevel(repoB), 'full')
 
   run('ponytail-mode-tracker.ts', repoB, JSON.stringify({ prompt: '/ponytail off' }))
   assert.equal(subagentLevel(repoB), null, '/ponytail off works in repo B')
-  assert.equal(subagentLevel(repoA), 'ultra', '/ponytail off in repo B leaves repo A alone')
+  assert.equal(subagentLevel(repoA), 'lite', '/ponytail off in repo B leaves repo A alone')
 
   // Paths with a directory separator and an underscore must not share a mode.
   const nested = path.join(temp, 'project', 'nested')
@@ -985,22 +991,18 @@ test('per-project mode flags stay independent', () => {
   fs.mkdirSync(sibling, { recursive: true })
   const nestedEnv = { HOME: projHome, USERPROFILE: projHome, CLAUDE_PROJECT_DIR: nested }
   const siblingEnv = { HOME: projHome, USERPROFILE: projHome, CLAUDE_PROJECT_DIR: sibling }
-  run('ponytail-activate.ts', { ...nestedEnv, PONYTAIL_DEFAULT_MODE: 'ultra' })
+  run('ponytail-activate.ts', { ...nestedEnv, PONYTAIL_DEFAULT_MODE: 'full' })
   assert.equal(
     subagentLevel({ ...nestedEnv, CLAUDE_PROJECT_DIR: nested.replace(/\\/g, '/') }),
-    'ultra',
+    'full',
     'alternate path separators still identify the same project',
   )
   run('ponytail-activate.ts', { ...siblingEnv, PONYTAIL_DEFAULT_MODE: 'off' })
-  assert.equal(
-    subagentLevel(nestedEnv),
-    'ultra',
-    'an off sibling must not clear the nested project',
-  )
+  assert.equal(subagentLevel(nestedEnv), 'full', 'an off sibling must not clear the nested project')
   run('ponytail-mode-tracker.ts', siblingEnv, JSON.stringify({ prompt: '/ponytail lite' }))
   assert.equal(
     subagentLevel(nestedEnv),
-    'ultra',
+    'full',
     'a sibling mode switch must not change the nested project',
   )
   assert.equal(subagentLevel(siblingEnv), 'lite')

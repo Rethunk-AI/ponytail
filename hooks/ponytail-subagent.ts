@@ -26,7 +26,8 @@ const mode = readMode()
 if (!mode || mode === 'off') {
   process.exit(0)
 }
-const activeMode: string = mode
+// Ultra pushes back before building; a subagent cannot ask anyone, so it builds its brief at full.
+const activeMode: string = mode === 'ultra' ? 'full' : mode
 
 function inject(): void {
   try {
