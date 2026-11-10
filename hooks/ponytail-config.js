@@ -42,7 +42,7 @@ function isDeactivationCommand(text) {
   return t === 'stop ponytail' || t === 'normal mode';
 }
 
-// ponytail: only embed the plugin install path in a statusline shell command when
+// ponytail: only embed the plugin install path in a shell command when
 // it's made of ordinary path characters. An allowlist beats escaping every shell's
 // metacharacters; a hostile clone path (quotes, &, $, backtick, ;, etc.) falls back
 // to manual setup instead. Allows : \ / for normal Windows and POSIX paths. Full

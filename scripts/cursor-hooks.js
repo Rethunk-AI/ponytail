@@ -58,8 +58,7 @@ function writeConfig(file, config) {
 
 // The template's PONYTAIL_DIR placeholder becomes this checkout's absolute
 // path. Forward slashes run unchanged under cmd, PowerShell and bash, and the
-// same allowlist that guards the statusline snippet keeps shell metacharacters
-// out of the command string.
+// isShellSafe allowlist keeps shell metacharacters out of the command string.
 function ponytailEntries() {
   const root = ROOT.replace(/\\/g, '/');
   if (!isShellSafe(root)) {

@@ -112,7 +112,7 @@ test('every hook command points at a script that ships in hooks/', () => {
 for (const script of ['ponytail-mode-tracker.js', 'ponytail-activate.js']) {
   test(`${script} self-exits when stdin never closes (no freeze)`, async () => {
     const hook = path.join(root, 'hooks', script);
-    // A throwaway home: the activate fallback writes the flag and the statusline copy.
+    // A throwaway home: the activate fallback writes the flag.
     const home = fs.mkdtempSync(path.join(os.tmpdir(), 'ponytail-stdin-'));
     const env = { ...process.env, HOME: home, USERPROFILE: home, CLAUDE_CONFIG_DIR: path.join(home, '.claude') };
     // stdin is a pipe we never write to or end, reproducing the deadlock.

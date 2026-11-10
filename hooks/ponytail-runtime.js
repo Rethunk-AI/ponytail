@@ -9,8 +9,7 @@ const STATE_FILE = '.ponytail-active';
 // ponytail: VS Code Copilot never sets COPILOT_PLUGIN_DATA — it only injects
 // CLAUDE_PLUGIN_ROOT, pointed at an install path under .vscode/agent-plugins/
 // (#528). Without this fallback isCopilot was false, so ponytail assumed
-// native Claude Code and emitted the statusline nudge, which VS Code Copilot
-// doesn't read.
+// native Claude Code.
 function isVsCodeCopilotRoot(pluginRoot) {
   if (!pluginRoot) return false;
   return pluginRoot.split(/[\\/]+/).includes('agent-plugins') &&
@@ -46,8 +45,8 @@ const statePath = path.join(stateDir, STATE_FILE);
 // Claude Code hands every hook its project dir, so the live mode is kept per
 // project and concurrent sessions in different repos stop overwriting each other
 // (#662, #809). Hosts without it keep the single shared flag.
-// ponytail: sessions in the SAME repo still share one mode, and the statusline
-// scripts read the shared flag (last write wins); key by session_id if either matters.
+// ponytail: sessions in the SAME repo still share one mode (last write wins);
+// key by session_id if that matters.
 const projectDir = (process.env.CLAUDE_PROJECT_DIR || '').trim();
 // Replacing separators with '_' aliases e.g. /work/a/b and /work/a_b (#662).
 // Do not read old sanitized keys: they cannot be assigned to one project safely.
@@ -56,7 +55,7 @@ const projectStatePath = projectDir
     createHash('sha256').update(path.normalize(projectDir)).digest('hex'))
   : null;
 
-// The shared flag is still written, for the statusline and project-less hosts.
+// The shared flag is still written, for project-less hosts.
 function setMode(mode) {
   for (const file of [projectStatePath, statePath]) {
     if (!file) continue;
