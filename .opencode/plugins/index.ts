@@ -11,7 +11,7 @@
 // all read one source of truth.
 //
 // OpenCode loads this as a server plugin — add it to your opencode.json:
-//   { "plugins": ["@dietrichgebert/ponytail"] }
+//   { "plugins": ["/path/to/ponytail/.opencode/plugins"] }
 //
 // One default export serves both plugin APIs: V2 reads `id` + `setup`, V1 calls
 // `server()`.

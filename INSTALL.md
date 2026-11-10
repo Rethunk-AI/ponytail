@@ -71,29 +71,23 @@ omp runs ponytail's Pi extension unchanged, so the ruleset is injected every tur
 
 ## OpenCode
 
+This fork is not published to npm. Clone it once and point OpenCode at the checkout's plugin directory (the plugin reuses `hooks/` and `skills/` beside it):
+
 ```bash
-opencode plugin add @dietrichgebert/ponytail
+git clone https://github.com/Rethunk-AI/ponytail ~/src/ponytail
 ```
 
-Or add it to a project's `opencode.json`:
-
 ```json
-{ "plugins": ["@dietrichgebert/ponytail"] }
-```
-
-Run from a checkout instead (the plugin reuses `hooks/` and `skills/`):
-
-```json
-{ "plugins": ["./.opencode/plugins"] }
+{ "plugins": ["/home/you/src/ponytail/.opencode/plugins"] }
 ```
 
 Injects the ruleset every turn at the active level; adds the `/ponytail` commands (see [Commands](README.md#commands)). OpenCode also auto-loads this repo's `AGENTS.md`, so the rules hold even without the plugin. The plugin adds the `lite/full/ultra/off` levels.
 
-The `./` path resolves against your project's `opencode.json`; to share one checkout across projects, point it at the absolute path of the checkout's `.opencode/plugins` directory. A `plugins` entry must name a **directory**, not a file: OpenCode 2 rejects a path to `ponytail.mjs` with `configured plugin path must be a directory`. Opening this repo in OpenCode 2 needs no entry at all: it loads `.opencode/plugins/index.ts` on its own.
+The `./` path resolves against your project's `opencode.json`; to share one checkout across projects, point it at the absolute path of the checkout's `.opencode/plugins` directory. A `plugins` entry must name a **directory**, not a file: OpenCode 2 rejects a path to `index.ts` with `configured plugin path must be a directory`. Opening this repo in OpenCode 2 needs no entry at all: it loads `.opencode/plugins/index.ts` on its own.
 
-Kilo Code is built on OpenCode and runs the same plugin through its `plugin` key: add `{ "plugin": ["@dietrichgebert/ponytail"] }` to `kilo.jsonc` (or `~/.config/kilo/kilo.jsonc` for every project).
+Kilo Code is built on OpenCode and runs the same plugin through its `plugin` key: add `{ "plugin": ["/home/you/src/ponytail/.opencode/plugins/index.ts"] }` to `kilo.jsonc` (or `~/.config/kilo/kilo.jsonc` for every project).
 
-OpenCode 1 has no `plugin add` and uses the older `plugin` key: `{ "plugin": ["@dietrichgebert/ponytail"] }`, or from a checkout the file path: `{ "plugin": ["./.opencode/plugins/index.ts"] }`.
+OpenCode 1 has no `plugin add` and uses the older `plugin` key with the checkout's file path: `{ "plugin": ["/home/you/src/ponytail/.opencode/plugins/index.ts"] }`.
 
 ## Gemini CLI
 
@@ -233,7 +227,7 @@ Jules (Google) reads `AGENTS.md` from the repository root, which this repo ships
 | Kimi Code                                     | `/plugins` in Kimi Code, then remove ponytail                                                                                                            |
 | Skills CLI                                    | `npx skills remove ponytail ponytail-audit ponytail-debt ponytail-gain ponytail-help ponytail-review` (same `--agent` / `--global` flags as the install) |
 | Oh My Pi (omp)                                | `omp plugin uninstall ponytail@rethunk-ponytail`, then `omp plugin marketplace remove rethunk-ponytail`                                                  |
-| OpenCode                                      | `opencode plugin remove @dietrichgebert/ponytail`                                                                                                        |
+| OpenCode                                      | remove the ponytail entry from `plugins` in `opencode.json`                                                                                              |
 | Cursor hooks                                  | `bun scripts/cursor-hooks.ts uninstall` (add `--project` for a project-level install); removes only ponytail's entries from `hooks.json`                 |
 | Cursor rule / Windsurf / Cline / Qoder / etc. | Delete the copied rule file                                                                                                                              |
 
