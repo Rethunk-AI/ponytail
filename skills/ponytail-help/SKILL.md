@@ -61,10 +61,8 @@ Resolution: env var > config file > `full`.
 
 ## Update
 
-Enable auto-update once: open `/plugin`, go to Marketplaces, pick ponytail, Enable auto-update. Claude Code then pulls new versions at startup (run `/reload-plugins` when it prompts). Manual refresh: `/plugin marketplace update ponytail` then `/reload-plugins`.
-
-If `/plugin` is not recognized, your Claude Code is out of date. Update it (`npm install -g @anthropic-ai/claude-code@latest`, or `brew upgrade claude-code`) and restart. Other hosts use their own update flow.
+`/plugin marketplace update rethunk-ponytail`, then `/reload-plugins`. Other hosts use their own update flow.
 
 ## More
 
-Full docs + examples: https://github.com/DietrichGebert/ponytail
+Docs: https://github.com/Rethunk-AI/ponytail
