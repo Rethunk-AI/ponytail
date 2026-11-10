@@ -24,10 +24,10 @@
   "bugs": {
     "url": "https://github.com/Rethunk-AI/ponytail/issues"
   },
-  "main": "./.opencode/plugins/ponytail.ts",
+  "main": "./.opencode/plugins/index.ts",
   "exports": {
-    ".": "./.opencode/plugins/ponytail.ts",
-    "./plugin": "./.opencode/plugins/ponytail.ts"
+    ".": "./.opencode/plugins/index.ts",
+    "./plugin": "./.opencode/plugins/index.ts"
   },
   "files": [
     "AGENTS.md",

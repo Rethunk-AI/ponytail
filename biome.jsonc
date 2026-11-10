@@ -379,7 +379,7 @@
     // (Bun, Node, Pi, OpenCode) and are never bundled for a browser, so Node builtins and
     // `process` are their platform, the same ground as a server route.
     {
-      "includes": ["hooks/**", "pi-extension/**", ".opencode/plugins/**"],
+      "includes": ["hooks/**", "pi-extension/**", ".opencode/plugins/**", ".opencode/lib/**"],
       "linter": {
         "rules": {
           "correctness": {
@@ -395,6 +395,12 @@
     {
       "includes": ["hooks/ponytail-env.ts"],
       "linter": { "rules": { "style": { "noProcessEnv": "off" } } }
+    },
+    // Repo-local: Pi and OpenCode load an extension through its module's default export, the
+    // same ground as canon's config-file relaxation; nothing else here may default-export.
+    {
+      "includes": ["pi-extension/index.ts", ".opencode/plugins/index.ts"],
+      "linter": { "rules": { "style": { "noDefaultExport": "off" } } }
     },
     // canon ts-biome-00027 — ambient declarations
     {

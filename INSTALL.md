@@ -93,7 +93,7 @@ The `./` path resolves against your project's `opencode.json`; to share one chec
 
 Kilo Code is built on OpenCode and runs the same plugin through its `plugin` key: add `{ "plugin": ["@dietrichgebert/ponytail"] }` to `kilo.jsonc` (or `~/.config/kilo/kilo.jsonc` for every project).
 
-OpenCode 1 has no `plugin add` and uses the older `plugin` key: `{ "plugin": ["@dietrichgebert/ponytail"] }`, or from a checkout the file path: `{ "plugin": ["./.opencode/plugins/ponytail.ts"] }`.
+OpenCode 1 has no `plugin add` and uses the older `plugin` key: `{ "plugin": ["@dietrichgebert/ponytail"] }`, or from a checkout the file path: `{ "plugin": ["./.opencode/plugins/index.ts"] }`.
 
 ## Gemini CLI
 
