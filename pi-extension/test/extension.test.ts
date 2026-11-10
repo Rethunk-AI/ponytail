@@ -181,7 +181,7 @@ test('before_agent_start keeps OMP prompt parts and uses Pi sections (#776, #953
     const sections: Record<string, string> = {}
     const event = { systemPrompt: 'BASE', systemPromptOptions: { sections } }
     assert.equal(await beforeStart(event, ctx), undefined)
-    assert.match(sections.ponytail ?? '', /PONYTAIL MODE ACTIVE/)
+    assert.match(sections.ponytail, /PONYTAIL MODE ACTIVE/)
     await command('ponytail').handler('off', ctx)
     await beforeStart(event, ctx)
     assert.equal(sections.ponytail, undefined)
