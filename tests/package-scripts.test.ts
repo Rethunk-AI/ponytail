@@ -8,12 +8,12 @@ const root = path.join(import.meta.dirname, '..')
 // `bun test` from the root discovers every *.test.ts beneath it, pi-extension/test included,
 // and `bun run ci` ends in that same script, so no per-subproject test script is needed.
 test('root test script runs bun test, which covers the pi-extension tests', () => {
-  const packageJson: { scripts: Record<string, string> } = JSON.parse(
+  const packageJson: { scripts: { test: string; ci: string } } = JSON.parse(
     fs.readFileSync(path.join(root, 'package.json'), 'utf8'),
   )
 
   assert.equal(packageJson.scripts.test, 'bun test')
-  assert.match(packageJson.scripts.ci ?? '', /bun run test$/)
+  assert.match(packageJson.scripts.ci, /bun run test$/)
   assert.ok(
     fs.readdirSync(path.join(root, 'pi-extension', 'test')).some((f) => f.endsWith('.test.ts')),
     'expected pi-extension/test to hold bun test files',
