@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 // Version-consistency guard. Ponytail declares its version in seven files across
 // five host ecosystems, and every release bumps all of them by hand.
 //
@@ -13,9 +13,12 @@
 import fs from 'node:fs'
 
 import path from 'node:path'
+import { getGithubRefName, getGithubRefType } from '../hooks/ponytail-env.ts'
 
 const root = path.join(import.meta.dirname, '..')
 const PINNED_SEMVER = /^\d+\.\d+\.\d+$/
+const BOM_RE = /^\uFEFF/
+const LEADING_V_RE = /^v/
 
 // Every file that declares the project version, and who reads it. Add new host
 // manifests here so a future ecosystem can't drift unnoticed.
@@ -29,13 +32,14 @@ const VERSION_FILES = [
   'package.json', // pi-package / repo root
 ]
 
-function readVersion(relPath) {
+function readVersion(relPath: string): unknown {
   try {
     // Strip a UTF-8 BOM some Windows editors prepend (breaks JSON.parse).
-    const raw = fs.readFileSync(path.join(root, relPath), 'utf8').replace(/^\uFEFF/, '')
-    return JSON.parse(raw).version
+    const raw = fs.readFileSync(path.join(root, relPath), 'utf8').replace(BOM_RE, '')
+    const manifest: { version?: unknown } = JSON.parse(raw)
+    return manifest.version
   } catch (e) {
-    throw new Error(`${relPath}: ${e.message}`)
+    throw new Error(`${relPath}: ${e instanceof Error ? e.message : String(e)}`, { cause: e })
   }
 }
 
@@ -65,9 +69,9 @@ const shared = distinct.length === 1 ? distinct[0] : null
 // On a release-tag push CI sets GITHUB_REF_TYPE=tag and GITHUB_REF_NAME=vX.Y.Z.
 // The shared version must equal the tag — this catches tagging a release whose
 // version files were never bumped, which mutual agreement alone cannot.
-if (shared && process.env.GITHUB_REF_TYPE === 'tag') {
-  const tag = process.env.GITHUB_REF_NAME || ''
-  const tagVersion = tag.replace(/^v/, '')
+if (shared && getGithubRefType() === 'tag') {
+  const tag = getGithubRefName() || ''
+  const tagVersion = tag.replace(LEADING_V_RE, '')
   if (PINNED_SEMVER.test(tagVersion) && tagVersion !== shared) {
     console.error(
       `release tag ${tag} does not match version ${shared}; bump the version files before tagging`,

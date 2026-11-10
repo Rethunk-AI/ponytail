@@ -1,14 +1,16 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import fs from 'node:fs'
 import path from 'node:path'
 
 const root = path.join(import.meta.dirname, '..')
 
-function read(relPath) {
+function read(relPath: string): string {
   return fs.readFileSync(path.join(root, relPath), 'utf8').replace(/\r\n/g, '\n').trim()
 }
 
-function stripFrontmatter(text) {
+const trim = (text: string): string => text.trim()
+
+function stripFrontmatter(text: string): string {
   return text.replace(/^---\n[\s\S]*?\n---\n*/, '').trim()
 }
 
@@ -16,13 +18,13 @@ const agents = read('AGENTS.md')
 const canonical = agents.replace(/\n\n\(Yes, this file also applies[\s\S]*?\)$/, '').trim()
 
 // Compact copies: same body as AGENTS.md, host-specific frontmatter stripped.
-const copies = [
+const copies: [string, (text: string) => string][] = [
   ['.cursor/rules/ponytail.mdc', stripFrontmatter],
-  ['.windsurf/rules/ponytail.md', (text) => text.trim()],
-  ['.clinerules/ponytail.md', (text) => text.trim()],
-  ['.agents/rules/ponytail.md', (text) => text.trim()],
-  ['.qoder/rules/ponytail.md', (text) => text.trim()],
-  ['.github/copilot-instructions.md', (text) => text.trim()],
+  ['.windsurf/rules/ponytail.md', trim],
+  ['.clinerules/ponytail.md', trim],
+  ['.agents/rules/ponytail.md', trim],
+  ['.qoder/rules/ponytail.md', trim],
+  ['.github/copilot-instructions.md', trim],
   ['.kiro/steering/ponytail.md', stripFrontmatter],
 ]
 
@@ -56,7 +58,7 @@ const INVARIANTS = [
 ]
 
 const skill = read('skills/ponytail/SKILL.md')
-const sources = [
+const sources: [string, string][] = [
   ['skills/ponytail/SKILL.md', skill],
   ['AGENTS.md', agents],
 ]

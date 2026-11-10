@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 // Generate the OpenClaw / ClawHub skill package (.openclaw/skills/) from the
 // canonical skills/. OpenClaw skills are SKILL.md (frontmatter + body), the same
 // format ponytail already uses, with one difference: `description` must be a
@@ -7,7 +7,7 @@
 // verbatim from skills/<name>/SKILL.md so the ruleset never drifts; only the
 // frontmatter is rewritten.
 //
-// Run:  node scripts/build-openclaw-skills.ts
+// Run:  bun scripts/build-openclaw-skills.ts
 // tests/openclaw-skills.test.ts fails if the committed copies are stale.
 
 import fs from 'node:fs'
@@ -16,8 +16,9 @@ import path from 'node:path'
 
 const ROOT = path.join(import.meta.dirname, '..')
 const HOMEPAGE = 'https://github.com/Rethunk-AI/ponytail'
+const MAX_DESCRIPTION_LENGTH = 160
 
-const DESCRIPTIONS = {
+const DESCRIPTIONS: Record<string, string> = {
   ponytail:
     'Lazy senior dev mode for any coding task: the smallest change that fully solves it, and a reply a busy human understands in one read.',
   'ponytail-review':
@@ -33,7 +34,7 @@ const DESCRIPTIONS = {
 
 const NAMES = Object.keys(DESCRIPTIONS)
 
-function sourceBody(name) {
+function sourceBody(name: string): string {
   const src = fs
     .readFileSync(path.join(ROOT, 'skills', name, 'SKILL.md'), 'utf8')
     .replace(/\r\n/g, '\n')
@@ -44,22 +45,25 @@ function sourceBody(name) {
   return src.slice(fm[0].length)
 }
 
-function render(name) {
+function render(name: string): string {
   const desc = DESCRIPTIONS[name]
-  if (desc.length > 160 || desc.includes('\n') || desc.includes('"')) {
+  if (desc === undefined) {
+    throw new Error(`no description for ${name}`)
+  }
+  if (desc.length > MAX_DESCRIPTION_LENGTH || desc.includes('\n') || desc.includes('"')) {
     throw new Error(`description for ${name} must be one line, no quotes, under 160 chars`)
   }
   const frontmatter = `---\nname: ${name}\ndescription: "${desc}"\nhomepage: ${HOMEPAGE}\nlicense: MIT\n---\n`
   return frontmatter + sourceBody(name)
 }
 
-function outPath(name) {
+function outPath(name: string): string {
   return path.join(ROOT, '.openclaw', 'skills', name, 'SKILL.md')
 }
 
 export { DESCRIPTIONS, NAMES, outPath, render, sourceBody }
 
-if (require.main === module) {
+if (import.meta.main) {
   for (const name of NAMES) {
     const p = outPath(name)
     fs.mkdirSync(path.dirname(p), { recursive: true })
