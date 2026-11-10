@@ -1,0 +1,7 @@
+reconciled = "canon v0.1.0-poc"
+
+[deviations]
+# Host environment variables are the plugin's input contract; one module reads and types them all, so the rule holds everywhere else.
+"ts-biome-00006 style/noProcessEnv" = "hooks/ponytail-env.ts is the single validated reader of host env vars; every other file keeps noProcessEnv"
+# Pi (jiti, ExtensionFactory) and OpenCode (Host.resolve reads default.id/setup/server) load an extension only through its default export.
+"ts-biome-00006 style/noDefaultExport" = "pi-extension/index.ts and .opencode/plugins/index.ts are host entry points loaded through their default export"

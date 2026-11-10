@@ -45,6 +45,8 @@
 
   // canon ts-biome-00024
   "javascript": {
+    // canon ts-bun-biome-00002
+    "globals": ["Bun"],
     "formatter": {
       "quoteStyle": "single",
       "semicolons": "asNeeded",
@@ -375,9 +377,8 @@
         }
       }
     },
-    // Repo-local, after canon ts-biome-00018: hooks and host plugins run inside agent hosts
-    // (Bun, Node, Pi, OpenCode) and are never bundled for a browser, so Node builtins and
-    // `process` are their platform, the same ground as a server route.
+    // Hooks and host plugins run inside agent hosts (Bun, Node, Pi, OpenCode), never in a browser;
+    // tsconfig.json states a lib without the DOM, the ground canon accepts for these two rules.
     {
       "includes": ["hooks/**", "pi-extension/**", ".opencode/plugins/**", ".opencode/lib/**"],
       "linter": {
@@ -389,15 +390,12 @@
         }
       }
     },
-    // Repo-local: host environment variables are this plugin's input contract. Every read goes
-    // through this one module, which validates and types them (canon ts-biome-00034's
-    // "validated configuration"); everywhere else noProcessEnv still holds.
+    // Declared in canon.toml: the single validated reader of host env vars.
     {
       "includes": ["hooks/ponytail-env.ts"],
       "linter": { "rules": { "style": { "noProcessEnv": "off" } } }
     },
-    // Repo-local: Pi and OpenCode load an extension through its module's default export, the
-    // same ground as canon's config-file relaxation; nothing else here may default-export.
+    // Declared in canon.toml: Pi and OpenCode load an extension only through its default export.
     {
       "includes": ["pi-extension/index.ts", ".opencode/plugins/index.ts"],
       "linter": { "rules": { "style": { "noDefaultExport": "off" } } }

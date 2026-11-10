@@ -53,7 +53,11 @@
     "incremental": true,
 
     // TS 6+ loads no @types package unless named; Bun supplies the runtime and node: types.
-    "types": ["bun"]
+    "types": ["bun"],
+
+    // No DOM: hooks and host plugins never run in a browser, which is what lets biome.jsonc relax
+    // noNodejsModules and noProcessGlobal for them (canon DESIGN.md § lib without the DOM).
+    "lib": ["ESNext"]
   },
   // Hooks, scripts and host plugins run as TypeScript under Bun; no emit, so tests sit beside them.
   "include": ["hooks", "scripts", "tests", "pi-extension", ".opencode"]
