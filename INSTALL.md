@@ -9,9 +9,11 @@ The Claude Code, Codex, Copilot, Qoder and Cursor hooks are TypeScript run by [B
 ```
 /plugin marketplace add Rethunk-AI/ponytail
 ```
+
 ```
 /plugin install ponytail@rethunk-ponytail
 ```
+
 (You have to send two separate prompts for the install to work)
 
 Same steps in the Claude Code Desktop app's Code tab: type the two `/plugin` commands above into the prompt box, or click the **+** button next to it, choose **Plugins** → **Add plugin** to browse your configured marketplaces, and manage marketplaces from **Customize** in the sidebar.
@@ -81,7 +83,7 @@ git clone https://github.com/Rethunk-AI/ponytail ~/src/ponytail
 { "plugins": ["/home/you/src/ponytail/.opencode/plugins"] }
 ```
 
-Injects the ruleset every turn at the active level; adds the `/ponytail` commands (see [Commands](README.md#commands)). OpenCode also auto-loads this repo's `AGENTS.md`, so the rules hold even without the plugin. The plugin adds the `lite/full/ultra/off` levels.
+Injects the ruleset every turn at the active level; adds the `/ponytail` commands. OpenCode also auto-loads this repo's `AGENTS.md`, so the rules hold even without the plugin. The plugin adds the `lite/full/ultra/off` levels.
 
 The `./` path resolves against your project's `opencode.json`; to share one checkout across projects, point it at the absolute path of the checkout's `.opencode/plugins` directory. A `plugins` entry must name a **directory**, not a file: OpenCode 2 rejects a path to `index.ts` with `configured plugin path must be a directory`. Opening this repo in OpenCode 2 needs no entry at all: it loads `.opencode/plugins/index.ts` on its own.
 

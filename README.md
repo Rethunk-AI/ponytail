@@ -32,5 +32,4 @@ with `{"defaultMode": "lite"}`. To clean up state ponytail writes outside the pl
 ## Upkeep
 
 `upstream` is DietrichGebert/ponytail. Merge upstream changes that touch the kept parts; the gate
-is `.github/workflows/test.yml` (`bun scripts/check-rule-copies.ts`, `bun scripts/check-versions.ts`,
-`bun test`); `bun run ci` runs it all with lint, typecheck and knip.
+is `bun run ci` (`.github/workflows/test.yml`).
