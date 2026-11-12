@@ -25,15 +25,21 @@ import {
   getXdgConfigHome,
 } from '../hooks/ponytail-env.ts'
 
+function assignEnv(name: string, value: string | undefined) {
+  if (value === undefined) {
+    delete process.env[name]
+    return
+  }
+  process.env[name] = value
+}
+
 function withEnv(name: string, value: string | undefined, fn: () => void) {
   const prev = process.env[name]
   try {
-    if (value === undefined) delete process.env[name]
-    else process.env[name] = value
+    assignEnv(name, value)
     fn()
   } finally {
-    if (prev === undefined) delete process.env[name]
-    else process.env[name] = prev
+    assignEnv(name, prev)
   }
 }
 

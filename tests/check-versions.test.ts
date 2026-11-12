@@ -19,7 +19,10 @@ function run(extra: NodeJS.ProcessEnv) {
   })
 }
 
-const cases: [string, NodeJS.ProcessEnv, number, string, RegExp | string][] = [
+const mismatch = (tag: string) =>
+  `release tag ${tag} does not match version ${version}; bump the version files before tagging\nAlign the version fields (see issue #260) so every manifest shares one version.\n`
+
+const cases: [string, NodeJS.ProcessEnv, number, string, string][] = [
   ['agrees when not a tag run', {}, 0, okLog, ''],
   [
     'release tag matches shared version',
@@ -33,7 +36,7 @@ const cases: [string, NodeJS.ProcessEnv, number, string, RegExp | string][] = [
     { GITHUB_REF_TYPE: 'tag', GITHUB_REF_NAME: 'v0.0.0' },
     1,
     '',
-    `release tag v0.0.0 does not match version ${version}; bump the version files before tagging\nAlign the version fields (see issue #260) so every manifest shares one version.\n`,
+    mismatch('v0.0.0'),
   ],
   [
     'non-semver tag is ignored',
@@ -47,7 +50,7 @@ const cases: [string, NodeJS.ProcessEnv, number, string, RegExp | string][] = [
     { GITHUB_REF_TYPE: 'tag', GITHUB_REF_NAME: '0.0.0' },
     1,
     '',
-    /release tag 0\.0\.0 does not match version/,
+    mismatch('0.0.0'),
   ],
 ]
 
@@ -56,7 +59,6 @@ for (const [name, extra, exit, stdout, stderr] of cases) {
     const result = run(extra)
     assert.equal(result.status, exit, result.stderr)
     assert.equal(result.stdout, stdout)
-    if (typeof stderr === 'string') assert.equal(result.stderr, stderr)
-    else assert.match(result.stderr, stderr)
+    assert.equal(result.stderr, stderr)
   })
 }
