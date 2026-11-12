@@ -146,9 +146,15 @@ function persistMode(args: string | undefined): void {
   // `/ponytail default <level>` saves the default for new sessions, like the Claude hook.
   const [first, second] = wanted.toLowerCase().split(WHITESPACE_RE)
   if (first === 'default') {
-    const saved = writeDefaultMode(second)
-    if (saved) {
-      process.stdout.write(`ponytail default ${saved}\n`)
+    try {
+      const saved = writeDefaultMode(second)
+      if (saved) {
+        process.stdout.write(`ponytail default ${saved}\n`)
+      }
+    } catch (error) {
+      process.stdout.write(
+        `PONYTAIL: could not save the default level (${error}). Nothing changed.\n`,
+      )
     }
     return
   }

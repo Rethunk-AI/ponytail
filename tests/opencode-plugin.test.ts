@@ -373,6 +373,33 @@ test('/ponytail default lite saves the default and leaves the session level alon
   fs.rmSync(path.join(tmp, 'ponytail'), { recursive: true, force: true })
 })
 
+test('unparseable config.json does not throw on /ponytail default lite', async () => {
+  const configDir = path.join(tmp, 'ponytail')
+  fs.mkdirSync(configDir, { recursive: true })
+  fs.mkdirSync(path.dirname(statePath), { recursive: true })
+  fs.writeFileSync(path.join(configDir, 'config.json'), '{"quietStartup": true,}')
+  fs.writeFileSync(statePath, 'ultra')
+  const chunks: string[] = []
+  const orig = process.stdout.write
+  process.stdout.write = ((chunk: string | Uint8Array, ...rest: unknown[]) => {
+    chunks.push(String(chunk))
+    return orig.call(process.stdout, chunk, ...(rest as []))
+  }) as typeof process.stdout.write
+  try {
+    const { command } = await setupV2()
+    await command('ponytail').execute({
+      sessionID: 's',
+      prompt: { text: 'default lite' },
+      delivery: 'steer',
+    })
+  } finally {
+    process.stdout.write = orig
+    fs.rmSync(configDir, { recursive: true, force: true })
+  }
+  assert.match(chunks.join(''), /could not save the default level/)
+  assert.equal(fs.readFileSync(statePath, 'utf8'), 'ultra')
+})
+
 test('unrelated commands do not touch the flag', async () => {
   fs.rmSync(statePath, { force: true })
   const hooks = await loadPlugin.server({})
