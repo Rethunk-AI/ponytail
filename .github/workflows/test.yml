@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: Rethunk-Tech/gh-actions/setup-bun@00f86ab1d379ecfb8d7d5b5cfa6e21a2722ac159 # v1.25
+      - uses: Rethunk-Tech/gh-actions/setup-bun@48cc92115e037b2ee57da2264f318265c8a78ec7 # v1.26
       # Same target as the local gate and lefthook's pre-push, so CI cannot drift from them.
       # tests/hermes-plugin.test.ts runs the Hermes plugin under the runner's python3.
       - run: bun run ci
