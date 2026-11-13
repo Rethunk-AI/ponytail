@@ -255,7 +255,9 @@ test('a project bunfig.toml preload does not run inside the hooks', () => {
   const isWindows = process.platform === 'win32'
   const commands = [
     ...commandHooks().map((h) => h.command),
-    ...copilotCommands().filter((c) => c && (isWindows ? !c.startsWith('bun') : c.startsWith('bun'))),
+    ...copilotCommands().filter(
+      (c) => c && (isWindows ? !c.startsWith('bun') : c.startsWith('bun')),
+    ),
   ].filter((c): c is string => Boolean(c))
   assert.ok(commands.length > 0, 'expected at least one command to check')
 
