@@ -2,7 +2,7 @@
 // installable with `hermes plugins install owner/repo`, register bundled skills,
 // inject active mode context, and expose slash commands.
 
-import { test } from 'bun:test'
+import { afterAll, test } from 'bun:test'
 
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
@@ -21,6 +21,9 @@ const commands = [
 ]
 
 const root = path.join(import.meta.dirname, '..')
+// Every config dir the tests make lives here, removed once at the end.
+const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'ponytail-hermes-'))
+afterAll(() => fs.rmSync(scratch, { recursive: true, force: true }))
 
 // ponytail: probe once; on Windows `python3` is the Store-alias stub that fails
 // even when Python is installed, so fall back to `python`.
@@ -43,7 +46,7 @@ function python(script: string, env: Record<string, string> = {}): string {
     env: {
       ...process.env,
       PONYTAIL_DEFAULT_MODE: '',
-      XDG_CONFIG_HOME: fs.mkdtempSync(path.join(os.tmpdir(), 'ponytail-config-')),
+      XDG_CONFIG_HOME: fs.mkdtempSync(path.join(scratch, 'config-')),
       ...env,
     },
     encoding: 'utf8',
@@ -120,7 +123,7 @@ print(json.dumps({'skills': ctx.skills, 'hooks': ctx.hooks, 'commands': ctx.comm
 })
 
 test('Hermes plugin builds mode-aware injected context from the canonical skill', () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ponytail-config-'))
+  const tmp = fs.mkdtempSync(path.join(scratch, 'config-'))
   const output = python(
     `
 import importlib.util, json
@@ -142,7 +145,7 @@ print(json.dumps({'ctx': ctx}))
 })
 
 test('Hermes mode config respects env, config file, off, and invalid command behavior', () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ponytail-config-'))
+  const tmp = fs.mkdtempSync(path.join(scratch, 'config-'))
   fs.mkdirSync(path.join(tmp, 'ponytail'), { recursive: true })
   fs.writeFileSync(
     path.join(tmp, 'ponytail', 'config.json'),
@@ -184,7 +187,7 @@ print(json.dumps({
 })
 
 test('Hermes honors plain and BOM-prefixed default-mode config before LLM calls', () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ponytail-config-'))
+  const tmp = fs.mkdtempSync(path.join(scratch, 'config-'))
   try {
     fs.mkdirSync(path.join(tmp, 'ponytail'))
     for (const prefix of ['', '\uFEFF']) {
@@ -214,7 +217,7 @@ print(json.dumps(mod._pre_llm_call()))
 })
 
 test('Hermes treats review as a command, never a level', () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ponytail-review-default-'))
+  const tmp = fs.mkdtempSync(path.join(scratch, 'review-default-'))
   fs.mkdirSync(path.join(tmp, 'ponytail'), { recursive: true })
   fs.writeFileSync(
     path.join(tmp, 'ponytail', 'config.json'),
