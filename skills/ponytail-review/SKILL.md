@@ -1,5 +1,6 @@
 ---
 name: ponytail-review
+disable-model-invocation: true
 description: >
   Quality review of a change: is the logic right, is it safe, does it hold
   under real load, is risky code tested, is it fast enough, and is every line

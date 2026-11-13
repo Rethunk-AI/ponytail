@@ -1,5 +1,6 @@
 ---
 name: ponytail-audit
+disable-model-invocation: true
 description: >
   Quality audit of a whole repo: bugs, security holes, what breaks under real
   load, risky code without tests, slow paths, and what to delete, merge or
