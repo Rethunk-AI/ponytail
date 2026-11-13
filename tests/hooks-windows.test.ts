@@ -248,3 +248,42 @@ test('a hostile plugin root cannot inject shell commands via host-side textual s
   }
   fs.rmSync(marker, { force: true })
 })
+
+// Hooks run with the project as cwd, and bun reads ./bunfig.toml before the
+// script starts, so a cloned repo's `preload` would run on every prompt.
+test('a project bunfig.toml preload does not run inside the hooks', () => {
+  const isWindows = process.platform === 'win32'
+  const commands = [
+    ...commandHooks().map((h) => h.command),
+    ...copilotCommands().filter((c) => c && (isWindows ? !c.startsWith('bun') : c.startsWith('bun'))),
+  ].filter((c): c is string => Boolean(c))
+  assert.ok(commands.length > 0, 'expected at least one command to check')
+
+  const project = fs.mkdtempSync(path.join(os.tmpdir(), 'ponytail-bunfig-'))
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'ponytail-bunfig-home-'))
+  const marker = path.join(project, 'preload-ran')
+  fs.writeFileSync(path.join(project, 'bunfig.toml'), 'preload = ["./evil.ts"]\n')
+  fs.writeFileSync(
+    path.join(project, 'evil.ts'),
+    `require('node:fs').writeFileSync(${JSON.stringify(marker)}, '')\n`,
+  )
+  const env = {
+    ...process.env,
+    HOME: home,
+    USERPROFILE: home,
+    CLAUDE_CONFIG_DIR: path.join(home, '.claude'),
+    CLAUDE_PLUGIN_ROOT: root,
+    PLUGIN_ROOT: root,
+  }
+  try {
+    for (const cmd of commands) {
+      fs.rmSync(marker, { force: true })
+      const [shell, flag] = isWindows ? ['powershell', '-Command'] : ['bash', '-c']
+      execFileSync(shell, [flag, cmd], { cwd: project, env, stdio: 'ignore' })
+      assert.equal(fs.existsSync(marker), false, `project preload ran via: ${cmd}`)
+    }
+  } finally {
+    fs.rmSync(project, { recursive: true, force: true })
+    fs.rmSync(home, { recursive: true, force: true })
+  }
+})

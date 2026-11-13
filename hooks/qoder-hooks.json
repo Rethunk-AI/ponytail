@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun \"${QODER_PLUGIN_ROOT}/hooks/ponytail-mode-tracker.ts\""
+            "command": "bun --cwd=/ \"${QODER_PLUGIN_ROOT}/hooks/ponytail-mode-tracker.ts\""
           }
         ]
       }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun \"${QODER_PLUGIN_ROOT}/hooks/ponytail-subagent.ts\""
+            "command": "bun --cwd=/ \"${QODER_PLUGIN_ROOT}/hooks/ponytail-subagent.ts\""
           }
         ]
       }
