@@ -1,6 +1,6 @@
 {
   "name": "@rethunk-ai/ponytail",
-  "version": "5.3.3",
+  "version": "5.3.4",
   "description": "Lazy senior dev mode for AI agents. The best code is the code you never wrote.",
   "keywords": [
     "opencode-plugin",
