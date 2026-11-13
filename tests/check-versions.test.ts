@@ -9,7 +9,7 @@ import path from 'node:path'
 const root = path.join(import.meta.dirname, '..')
 const script = path.join(root, 'scripts/check-versions.ts')
 const version: string = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version
-const okLog = `All 7 version files pinned at ${version}.\n`
+const okLog = `All 8 version files pinned at ${version}.\n`
 
 function run(extra: NodeJS.ProcessEnv) {
   return spawnSync(process.execPath, [script], {

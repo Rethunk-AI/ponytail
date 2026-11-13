@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
-// Version-consistency guard. Ponytail declares its version in seven files across
-// five host ecosystems, and every release bumps all of them by hand.
+// Version-consistency guard. Ponytail declares its version in eight files across
+// six host ecosystems, and every release bumps all of them by hand.
 //
 // tests/gemini-extension.test.ts already checks the four plugin manifests agree
 // with each other, but that can't catch the failure mode that shipped in v4.8.0:
@@ -30,12 +30,17 @@ const VERSION_FILES = [
   '.qoder-plugin/plugin.json', // Qoder plugin
   'gemini-extension.json', // Gemini CLI extension
   'package.json', // pi-package / repo root
+  'plugin.yaml', // Hermes plugin
 ]
+const YAML_VERSION_RE = /^version:\s*['"]?([^'"\s#]+)/m
 
 function readVersion(relPath: string): unknown {
   try {
     // Strip a UTF-8 BOM some Windows editors prepend (breaks JSON.parse).
     const raw = fs.readFileSync(path.join(root, relPath), 'utf8').replace(BOM_RE, '')
+    if (relPath.endsWith('.yaml')) {
+      return YAML_VERSION_RE.exec(raw)?.[1]
+    }
     const manifest: { version?: unknown } = JSON.parse(raw)
     return manifest.version
   } catch (e) {
