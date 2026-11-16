@@ -43,7 +43,7 @@ test('every registered command ships an OpenCode .opencode/command/*.md', () => 
 })
 
 // /ponytail-debt documents one grep for the whole tree, shipped in four copies.
-// It missed C-style /* ponytail: */ block comments (#810), so the ledger silently
+// It missed C-style /* ponytail: */ block comments, so the ledger silently
 // skipped every C/Java/CSS marker. Feed each shipped expression to real grep
 // rather than restating it here: a copied regex only tests the copy.
 const debtCopies = [
@@ -94,7 +94,7 @@ test.skipIf(!hasGrep)('every ponytail-debt copy greps #, // and /* markers but n
   }
 })
 
-// The full documented command must skip .git and whatever .gitignore ignores, in any stack (#948, #1100).
+// The full documented command must skip .git and whatever .gitignore ignores, in any stack.
 test.skipIf(!hasShAndGit)(
   'the ponytail-debt scan skips .git and ignored dirs like node_modules, dist, build and .next',
   () => {

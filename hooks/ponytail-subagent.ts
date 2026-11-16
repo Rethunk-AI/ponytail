@@ -1,10 +1,10 @@
 // ponytail — Claude Code SubagentStart hook
 //
 // SessionStart context is parent-thread only and never reaches subagents, so
-// without this every Task-spawned agent runs ponytail-unaware (issue #252).
+// without this every Task-spawned agent runs ponytail-unaware.
 // When ponytail mode is active, inject the same ruleset into each subagent.
 //
-// Scoping (opt-in, issue #506): set PONYTAIL_SUBAGENT_MATCHER to a regex and
+// Scoping (opt-in): set PONYTAIL_SUBAGENT_MATCHER to a regex and
 // the ruleset is injected only into subagents whose agent_type matches. The
 // regex is unanchored and case-insensitive — "explore|general" matches either,
 // "^general$" is exact. Unset means inject into every subagent, as before.
@@ -50,7 +50,7 @@ try {
 
 // No matcher → keep the original synchronous, stdin-independent path. On Windows
 // the PowerShell `if {}` wrapper can swallow the piped JSON so stdin 'end' never
-// fires (#443); the default path must not wait on stdin or it would stall every
+// fires; the default path must not wait on stdin or it would stall every
 // subagent spawn.
 if (!matcherRe) {
   inject()
@@ -78,7 +78,7 @@ function finish() {
     // Unparseable payload — fall through and inject to be safe.
   }
   // .test() is synchronous, so a backtracking-heavy matcher like (a+)+$ would
-  // block the event loop and the fallback timer below could never fire (#658).
+  // block the event loop and the fallback timer below could never fire.
   // Run it under a vm timeout; a timeout fails open like every other doubt.
   let matches = true
   try {
@@ -103,10 +103,10 @@ process.stdin.on('end', () => {
   finish()
   process.exit(0)
 })
-// Never block the session (#443): recover on stdin error or a short fallback.
+// Never block the session: recover on stdin error or a short fallback.
 // The fallback stays ref'd: on Windows a stuck ref'd stdin keeps the loop
 // alive and an unref'd timer is never scheduled, so the hook hung to the
-// external watchdog instead of exiting at 1s (#790).
+// external watchdog instead of exiting at 1s.
 process.stdin.on('error', () => {
   finish()
   process.exit(0)

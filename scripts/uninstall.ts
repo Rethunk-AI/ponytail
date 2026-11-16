@@ -51,7 +51,7 @@ removeIfExists(
 )
 removeIfExists(getConfigPath(), 'config file')
 
-// Cursor hooks (#817): drop only ponytail's entries from ~/.cursor/hooks.json,
+// Cursor hooks: drop only ponytail's entries from ~/.cursor/hooks.json,
 // keep every other hook the user configured there.
 try {
   const hooksFile = uninstallCursorHooks('user')

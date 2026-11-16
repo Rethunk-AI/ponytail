@@ -28,8 +28,8 @@ test('uninstall removes every ponytail flag, config and hook entry and leaves th
   const flagPath = path.join(claudeDir, '.ponytail-active')
   fs.writeFileSync(flagPath, 'full')
 
-  // Qoder keeps its flag in ~/.qoder (hooks/ponytail-runtime.ts), and since
-  // #676 it holds "off", so a leftover would start a reinstall switched off.
+  // Qoder keeps its flag in ~/.qoder (hooks/ponytail-runtime.ts); it can
+  // hold "off", so a leftover would start a reinstall switched off.
   const qoderFlagPath = path.join(home, '.qoder', '.ponytail-active')
   fs.mkdirSync(path.dirname(qoderFlagPath), { recursive: true })
   fs.writeFileSync(qoderFlagPath, 'ultra')
@@ -49,7 +49,7 @@ test('uninstall removes every ponytail flag, config and hook entry and leaves th
   const configPath = path.join(configDir, 'config.json')
   fs.writeFileSync(configPath, JSON.stringify({ defaultMode: 'ultra' }))
 
-  // Cursor (#817): the Cursor mode flag goes too, and ~/.cursor/hooks.json loses
+  // Cursor: the Cursor mode flag goes too, and ~/.cursor/hooks.json loses
   // only ponytail's entries; the user's other hooks stay.
   const cursorDir = path.join(home, '.cursor')
   fs.mkdirSync(cursorDir, { recursive: true })
@@ -104,7 +104,7 @@ test('uninstall removes every ponytail flag, config and hook entry and leaves th
     'Qoder custom config mode flag must be removed',
   )
 
-  // A malformed ~/.cursor/hooks.json must not crash the script either (#817).
+  // A malformed ~/.cursor/hooks.json must not crash the script either.
   const malformedHooks = '{ "version": 1, "hooks": { broken'
   fs.writeFileSync(cursorHooksPath, malformedHooks)
 

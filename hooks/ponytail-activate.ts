@@ -35,7 +35,7 @@ function activate(mode: string): void {
 
   // Cursor with the always-on rule in the workspace: the rule already carries the
   // ruleset and would contradict any other level, so leave the flag alone and
-  // hand the model a one-line notice instead of a second copy (#817).
+  // hand the model a one-line notice instead of a second copy.
   if (isCursor) {
     const rule = cursorRulePath()
     if (rule) {
@@ -91,7 +91,7 @@ function finish() {
 process.stdin.on('data', (chunk) => {
   input += chunk
 })
-// Never hang the session start (#443, #790): like the mode tracker, recover on a
+// Never hang the session start: like the mode tracker, recover on a
 // stdin error or after a short ref'd fallback, and start at the default level.
 process.stdin.on('end', () => {
   finish()

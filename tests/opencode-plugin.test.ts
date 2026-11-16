@@ -45,10 +45,10 @@ beforeAll(async () => {
   )
   const mod = await import(url.href)
   loadPlugin = mod.default
-  // The frontmatter parser used to be exported from the plugin module itself.
-  // OpenCode's legacy loader treats every exported function as a plugin and
-  // tried to invoke it with the plugin context object, which crashed. The
-  // parser lives outside plugins/, so the loader never sees it; import it directly.
+  // Exporting the frontmatter parser from the plugin module would make
+  // OpenCode's legacy loader treat it as a plugin and invoke it with the
+  // plugin context object, which crashes. The parser lives outside
+  // plugins/, so the loader never sees it; import it directly.
   const parser = await import('../.opencode/lib/ponytail-frontmatter.ts')
   parseCommandFile = parser.parseCommandFile
   parseSkillFile = parser.parseSkillFile

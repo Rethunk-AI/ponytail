@@ -1,6 +1,6 @@
 # Cursor hooks
 
-Native Cursor support through `hooks.json` (issue #817). The adapter reuses the
+Native Cursor support through `hooks.json`. The adapter reuses the
 shared hook scripts; the only Cursor-specific pieces are the hooks template, the
 install script and a small output branch in `hooks/ponytail-runtime.ts`.
 

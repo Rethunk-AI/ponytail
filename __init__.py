@@ -75,7 +75,7 @@ def _filter_skill_body_for_mode(body: str, mode: str) -> str:
         # this, an ordinary rule bullet that happens to start with a mode word
         # (e.g. "- Full: ...") is silently dropped in every other mode — it looks
         # like a worked example but is really prose meant to survive verbatim.
-        # Mirrors the fix in hooks/ponytail-instructions.ts (#571).
+        # Mirrors the fix in hooks/ponytail-instructions.ts.
         example_label = re.match(r'^-\s*([^:]+):\s*"', line)
         if example_label:
             label_mode = _normalize_runtime_mode(example_label.group(1))
@@ -175,7 +175,7 @@ def _handle_mode_command(raw_args: str) -> str:
     global _current_mode
     arg = (raw_args or "").strip().lower()
     if not arg:
-        # Bare /ponytail switches ponytail on, or reports the level when it already is (#639).
+        # Bare /ponytail switches ponytail on, or reports the level when it already is.
         mode = _current_mode or _default_mode()
         if mode != "off":
             return f"Ponytail mode: {mode}. Use `/ponytail lite|full|ultra|off`."

@@ -52,7 +52,7 @@ function deactivate(state: TurnState): void {
 // `/ponytail default <mode>` persists the default to config (survives
 // restarts). Plain switches stay session-scoped ("sticks until session
 // end"), so this is the only path that writes config. review is not a
-// valid default (#377), so only off/lite/full/ultra are accepted.
+// valid default, so only off/lite/full/ultra are accepted.
 function saveFailure(what: string, error: unknown): string {
   const reason = error instanceof Error ? error.message : String(error)
   return `PONYTAIL: could not save the ${what} (${reason}). Nothing changed.`
@@ -80,7 +80,7 @@ function resolveSwitch(arg: string): Switch {
     return { mode: null, reportOnly: false }
   }
   // Bare /ponytail switches ponytail on: off → the default level (full if
-  // the default is off too); already on → keep the level, report it (#639).
+  // the default is off too); already on → keep the level, report it.
   const live = readMode()
   if (live && live !== 'off') {
     return { mode: live, reportOnly: true }
@@ -106,7 +106,7 @@ function applySwitch(mode: string, state: TurnState): void {
   if (isQoder) {
     return
   }
-  // Cursor (#817) and Codex have no /ponytail command that would load
+  // Cursor and Codex have no /ponytail command that would load
   // the skill body for the new level, and the SessionStart ruleset is
   // filtered to the start level, so the tracker delivers that level's
   // ruleset along with the confirmation.
@@ -122,8 +122,8 @@ function applySwitch(mode: string, state: TurnState): void {
 function handlePonytailCommand(prompt: string, state: TurnState): boolean {
   const parts = prompt.split(WHITESPACE_RE)
   const cmd = (parts[0] ?? '').replace(SIGIL_RE, '/')
-  // /ponytail-review is a one-shot skill, not a session level (#736).
-  // Matching it here used to setMode('review'), which latched
+  // /ponytail-review is a one-shot skill, not a session level.
+  // Matching it here would setMode('review') and latch
   // INDEPENDENT_MODES for the rest of the session.
   if (cmd !== '/ponytail' && cmd !== '/ponytail:ponytail') {
     return false
@@ -185,7 +185,7 @@ function handleQoder(state: TurnState): void {
 function handlePrompt(prompt: string): void {
   // Cursor with the always-on rule in the workspace: no hook can change or
   // switch off a rule, so answer the command with the notice instead of
-  // writing a mode the rule would contradict (#817). Ordinary prompts
+  // writing a mode the rule would contradict. Ordinary prompts
   // stay silent as usual.
   const isCommand = PONYTAIL_COMMAND_RE.test(prompt)
   if (isCursor && (isCommand || isDeactivationCommand(prompt))) {
@@ -233,7 +233,7 @@ process.stdin.on('data', (chunk) => {
   input += chunk
 })
 // Exit on 'end', not just finish(): the fallback timer below must stay ref'd
-// (see #790) so it can actually fire when stdin is stuck, and a ref'd timer
+// so it can actually fire when stdin is stuck, and a ref'd timer
 // would otherwise keep the process alive for its full 1000ms on this normal
 // fast path.
 process.stdin.on('end', () => {
@@ -243,13 +243,13 @@ process.stdin.on('end', () => {
 
 // Never hang the session. On Windows, Claude Code runs this hook through a
 // PowerShell `if {}` wrapper that can swallow the piped prompt JSON, so stdin
-// 'end' never fires and the hook blocks forever — freezing the session (#443).
+// 'end' never fires and the hook blocks forever — freezing the session.
 // On error, or after a short fallback, process whatever arrived (recovering the
 // mode if data came without EOF) and exit. The fallback timer MUST stay ref'd:
 // on Windows a stuck ref'd stdin handle keeps the event loop alive, and an
 // unref'd timer competing with it is never scheduled — so the fallback was
 // dead code in exactly the #443/#790 case it exists for, and the hook hung
-// until Claude Code's external 5s watchdog killed it (#790). Mirrors the
+// until Claude Code's external 5s watchdog killed it. Mirrors the
 // best-effort, never-block contract the other lifecycle hooks already follow.
 process.stdin.on('error', () => {
   finish()

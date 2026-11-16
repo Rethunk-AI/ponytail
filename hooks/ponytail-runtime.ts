@@ -28,7 +28,7 @@ interface HookSpecificOutput {
 
 // ponytail: VS Code Copilot never sets COPILOT_PLUGIN_DATA — it only injects
 // CLAUDE_PLUGIN_ROOT, pointed at an install path under .vscode/agent-plugins/
-// (#528). Without this fallback isCopilot was false, so ponytail assumed
+// Without this fallback isCopilot was false, so ponytail assumed
 // native Claude Code.
 function isVsCodeCopilotRoot(pluginRoot: string | undefined): boolean {
   if (!pluginRoot) {
@@ -43,10 +43,10 @@ function isVsCodeCopilotRoot(pluginRoot: string | undefined): boolean {
 const isCopilot = Boolean(getCopilotPluginData()) || isVsCodeCopilotRoot(getClaudePluginRoot())
 const isCodex = !isCopilot && Boolean(getPluginData())
 const isQoder = !(isCopilot || isCodex) && Boolean(getQoderSessionId())
-// CodeBuddy (#854) loads the Claude-format plugin and sets CLAUDE_PLUGIN_ROOT
+// CodeBuddy loads the Claude-format plugin and sets CLAUDE_PLUGIN_ROOT
 // too, but adds CODEBUDDY_PLUGIN_ROOT only for its own plugin hook processes.
 const isCodeBuddy = !(isCopilot || isCodex || isQoder) && Boolean(getCodeBuddyPluginRoot())
-// Cursor (#817): CURSOR_VERSION is set only in the environment Cursor builds
+// Cursor: CURSOR_VERSION is set only in the environment Cursor builds
 // for hook processes (Cursor 3.20.17 assigns it in exactly one place, the hook
 // env builder), so it never leaks into a Claude Code session running inside
 // Cursor's terminal. Cursor also sets it when it runs a Claude-format plugin's
@@ -77,11 +77,11 @@ const statePath = path.join(stateDir, STATE_FILE)
 
 // Claude Code hands every hook its project dir, so the live mode is kept per
 // project and concurrent sessions in different repos stop overwriting each other
-// (#662, #809). Hosts without it keep the single shared flag.
+// Hosts without it keep the single shared flag.
 // ponytail: sessions in the SAME repo still share one mode (last write wins);
 // key by session_id if that matters.
 const projectDir = getClaudeProjectDir()
-// Replacing separators with '_' aliases e.g. /work/a/b and /work/a_b (#662).
+// Replacing separators with '_' aliases e.g. /work/a/b and /work/a_b.
 // Do not read old sanitized keys: they cannot be assigned to one project safely.
 const projectStatePath = projectDir
   ? path.join(
@@ -126,7 +126,7 @@ function readMode(): string | null {
 // Cursor's always-on project rule (.cursor/rules/ponytail.mdc) already puts the
 // ruleset in front of every prompt and no hook can switch a rule off, so while
 // it is in the workspace the hooks step back instead of injecting a second,
-// possibly contradicting, copy (#817). Cursor hands every hook the workspace
+// possibly contradicting, copy. Cursor hands every hook the workspace
 // root as CURSOR_PROJECT_DIR; project hooks also run from that directory.
 // ponytail: first workspace root only, a rule in a secondary folder of a
 // multi-root workspace goes undetected.
@@ -149,7 +149,7 @@ function cursorRuleNotice(rule: string): string {
 }
 
 // Synchronous: every hook calls process.exit() right after this, and on macOS a pipe
-// write is async, so a pending write died with the process (#1043).
+// write is async, so a pending write died with the process.
 function writeOut(text: string): void {
   fs.writeSync(1, text)
 }
@@ -164,7 +164,7 @@ function writeHookOutput(event: string, _mode: string, context = ''): void {
   }
   if (isCodex) {
     // No systemMessage: Codex maps it to a yellow `warning:` entry (and de-greens the
-    // completed-hook bullet), reading as an error every session (#605). The mode still
+    // completed-hook bullet), reading as an error every session. The mode still
     // shows via the additionalContext "hook context:" line — active level when on,
     // "PONYTAIL MODE OFF" when off (that path passes context too).
     // ponytail: if openai/codex#16933 lands and hides additionalContext, restore a

@@ -5,7 +5,7 @@
 // tests/gemini-extension.test.ts already checks the four plugin manifests agree
 // with each other, but that can't catch the failure mode that shipped in v4.8.0:
 // every manifest stayed stale at 4.7.0 *together* while the release moved on, so
-// they "agreed" and the test passed (#260, #262). It also ignores the two
+// they "agreed" and the test passed. It also ignores the two
 // package.json files. This check closes both gaps:
 //   1. every version-bearing file must share one pinned X.Y.Z version, and
 //   2. on a release-tag CI run, that shared version must equal the tag.

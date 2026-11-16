@@ -108,7 +108,7 @@ function getQoderDir(): string {
 function getDefaultMode(): string {
   // 1. Environment variable (highest priority)
   // ponytail: a default must be a runtime level (off/lite/full/ultra); review is
-  // a session-only mode, never a valid default (#377). Normalize here so values
+  // a session-only mode, never a valid default. Normalize here so values
   // with whitespace or mixed casing still resolve correctly.
   const envMode = normalizeMode(getPonytailDefaultMode())
   if (envMode) {
@@ -144,7 +144,7 @@ function getQuietStartup(): boolean {
   }
 }
 
-// Hide the status-bar indicator while keeping ponytail active (#324).
+// Hide the status-bar indicator while keeping ponytail active.
 // PONYTAIL_HIDE_STATUS=1 (or any truthy value; 0/false/empty mean "don't hide")
 // takes precedence, else config.hideStatus === true.
 function getHideStatus(): boolean {
@@ -160,7 +160,7 @@ function getHideStatus(): boolean {
 }
 
 function writeDefaultMode(mode: unknown): string | null {
-  // ponytail: only a runtime level can be a default; review is session-only (#377).
+  // ponytail: only a runtime level can be a default; review is session-only.
   const normalized = normalizeMode(mode)
   if (!normalized) {
     return null

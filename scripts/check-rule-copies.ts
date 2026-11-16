@@ -44,8 +44,8 @@ for (const [relPath, normalize] of copies) {
 // a rule's wording trips this, which is the reminder to propagate it everywhere.
 // Upgrade path: generate the copies from SKILL.md if this ever misses a real drift.
 const INVARIANTS = [
-  'in this codebase', // ladder rung: reuse what already exists (#217)
-  'grep every caller', // root-cause bug fix (#245)
+  'in this codebase', // ladder rung: reuse what already exists
+  'grep every caller', // root-cause bug fix
   'never about the change itself', // scope: callers, tests and fixtures the change breaks
   'shortcut: <the limit>, <when to upgrade>', // shortcut marker comment
   'correct on edge cases', // robust-variant rule

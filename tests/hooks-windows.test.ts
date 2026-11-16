@@ -1,14 +1,13 @@
-// Regression test for issues #19 and #593: on Windows the lifecycle hooks run
+// Regression test: on Windows the lifecycle hooks run
 // via PowerShell, so the shared `command` field must be cross-platform (plain
 // `bun`, no bash-only syntax). commandWindows is not part of the supported
 // hooks schema on the Claude.ai plugin marketplace validator, so it is omitted
 // — plain `bun -e "..."` works everywhere without relying on shell-specific
-// variable syntax (see #824: the command text used to embed a
-// ${CLAUDE_PLUGIN_ROOT} placeholder that the *host* substitutes textually
-// before the shell parses the command, which is unsafe if the substituted
-// value carries shell metacharacters — the fixed command instead reads
-// process.env.CLAUDE_PLUGIN_ROOT from inside the runtime, so the shell never
-// re-parses the plugin root at all).
+// variable syntax. Embedding a ${CLAUDE_PLUGIN_ROOT} placeholder would let
+// the *host* substitute it textually before the shell parses the command,
+// which is unsafe if the substituted value carries shell metacharacters —
+// the command reads process.env.CLAUDE_PLUGIN_ROOT from inside the runtime,
+// so the shell never re-parses the plugin root.
 //
 // The hook also has to point at a script that actually ships in hooks/.
 
@@ -28,7 +27,7 @@ const HOST_PLUGIN_MANIFESTS = ['.claude-plugin/plugin.json', '.codex-plugin/plug
 const POSIX_GUARD_SYNTAX = /\bcommand\s+-v\b|&&|\|\||>\/dev\/null|2>&1/
 // Pull the hooks/<script> a command launches, so we can check it exists.
 const HOOK_SCRIPT = /hooks[\\/]([\w.-]+\.(?:ts|ps1|sh))/
-// #824: a plugin-root placeholder textually interpolated into shell command
+// A plugin-root placeholder textually interpolated into shell command
 // text is unsafe — the host substitutes it before the shell parses the
 // command, so a hostile install path can break out of the quoting.
 const PLUGIN_ROOT_PLACEHOLDER = /\$\{(?:CLAUDE_)?PLUGIN_ROOT\}/
@@ -59,7 +58,7 @@ function copilotCommands(): (string | undefined)[] {
 }
 
 // commandWindows is not part of the supported hooks schema on the Claude.ai
-// plugin marketplace validator (#593). Since the shared `command` field
+// plugin marketplace validator. Since the shared `command` field
 // already runs cross-platform (plain `node -e "..."`, no shell-specific
 // syntax, and VS Code Copilot ignores commandWindows and runs `command`
 // through PowerShell on Windows anyway), it is omitted.
@@ -81,15 +80,15 @@ test('shared hook commands avoid POSIX-only guard syntax', () => {
   }
 })
 
-// Issue #527 / #569: the shared `command` field must be shell-agnostic. `exec`
+// The shared `command` field must be shell-agnostic. `exec`
 // is a bash/zsh builtin with no PowerShell equivalent, but some hosts run
 // `command` through PowerShell on Windows regardless of the commandWindows
 // field — VS Code Copilot always does (it never reads commandWindows), and
 // native Claude Code launched from Git Bash was seen doing the same. `exec
 // bun ...` then dies on its first token with CommandNotFoundException, so
 // every hook fails on Windows. Plain `bun ...` runs natively in both bash and
-// PowerShell. The wrapper-process pileup that #461 originally used `exec` to
-// avoid is handled separately by each hook's stdin self-exit guard (#443/#477).
+// PowerShell. The wrapper-process pileup exec would avoid is handled
+// separately by each hook's stdin self-exit guard.
 test('shared hook commands are shell-agnostic (no bash-only exec prefix)', () => {
   const commands = commandHooks().flatMap((h) => (h.command ? [h.command] : []))
   assert.ok(commands.length > 0, 'expected at least one shared command entry')
@@ -124,7 +123,7 @@ test('every hook command points at a script that ships in hooks/', () => {
   }
 })
 
-// Issue #443: on Windows the UserPromptSubmit hook runs inside a PowerShell
+// On Windows the UserPromptSubmit hook runs inside a PowerShell
 // `if {}` wrapper that can swallow the piped prompt JSON, so stdin 'end' never
 // fires. The hook must never wait on stdin forever — that freezes the whole
 // session. It has to self-exit even when stdin stays open and empty. The
@@ -175,7 +174,7 @@ test('Claude and Codex manifests point at the shared host-specific hook config',
   }
 })
 
-// #824: lifecycle hook commands must not interpolate the plugin-root
+// Lifecycle hook commands must not interpolate the plugin-root
 // placeholder into shell text — a host that substitutes it textually before
 // the shell parses the command lets a hostile install path break out of the
 // quoting. Commands must instead have the invoked script read the root from
@@ -204,7 +203,7 @@ test('copilot-hooks.json commands contain no plugin-root placeholder', () => {
   }
 })
 
-// End-to-end proof for #824. The reported mechanism is specifically a HOST
+// End-to-end proof. The reported mechanism is specifically a HOST
 // that textually substitutes a ${CLAUDE_PLUGIN_ROOT}/${PLUGIN_ROOT}
 // placeholder into the command STRING itself before a shell parses it — a
 // real shell's own quoted ${VAR} expansion is safe (no re-parsing inside

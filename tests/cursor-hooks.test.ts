@@ -1,4 +1,4 @@
-// Cursor adapter compatibility check (#817). The hooks must speak Cursor's
+// Cursor adapter compatibility check. The hooks must speak Cursor's
 // hooks.json contract: camelCase events, JSON on stdout (empty stdout is a
 // no-op, raw text is a parse error), `additional_context` on sessionStart, and
 // `continue` plus `additional_context` on beforeSubmitPrompt. The installer must

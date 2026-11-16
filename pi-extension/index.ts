@@ -142,7 +142,7 @@ export function parsePonytailCommand(
     .toLowerCase()
 
   if (!normalizedText) {
-    // Bare /ponytail switches ponytail on, or reports the level when it already is (#639).
+    // Bare /ponytail switches ponytail on, or reports the level when it already is.
     if (currentMode && currentMode !== 'off') {
       return { type: 'status' }
     }
@@ -156,7 +156,7 @@ export function parsePonytailCommand(
   }
 
   if (primary === 'default') {
-    // ponytail: a default must be a runtime level; review is session-only (#377).
+    // ponytail: a default must be a runtime level; review is session-only.
     const mode = normalizeMode(secondary)
     return mode
       ? { type: 'set-default', mode }
@@ -178,7 +178,7 @@ function withInstructions(
   mode: string,
 ): SystemPromptResult | undefined {
   if (!mode || mode === 'off') {
-    // Clear a stale section when the mode is off so a previous turn does not linger (#953).
+    // Clear a stale section when the mode is off so a previous turn does not linger.
     if (event?.systemPromptOptions?.sections) {
       Reflect.deleteProperty(event.systemPromptOptions.sections, 'ponytail')
     }
@@ -186,19 +186,19 @@ function withInstructions(
   }
   const instructions = getPonytailInstructions(mode)
   // Prefer structured sections so Pi can keep the cached prefix when other
-  // extensions change their own section (#953). Fall back to replacement
+  // extensions change their own section. Fall back to replacement
   // for older Pi versions without systemPromptOptions.sections.
   const sections = event?.systemPromptOptions?.sections
   if (sections && typeof sections === 'object') {
     sections.ponytail = instructions
     return
   }
-  // OMP passes the system prompt as an array of parts; keep it one (#776).
+  // OMP passes the system prompt as an array of parts; keep it one.
   if (Array.isArray(event?.systemPrompt)) {
     return { systemPrompt: [...event.systemPrompt, instructions] }
   }
   // Guard a null/undefined event or a missing systemPrompt: don't crash, and
-  // don't prepend the literal string "undefined" to the prompt (#439, #440).
+  // don't prepend the literal string "undefined" to the prompt.
   const base = event?.systemPrompt ? `${event.systemPrompt}\n\n` : ''
   return { systemPrompt: `${base}${instructions}` }
 }
@@ -232,7 +232,7 @@ export default function ponytailExtension(pi: PiApi) {
       lastCtx = ctx
     }
     const c = ctx || lastCtx
-    // ponytail: hide the indicator but keep the ruleset active (#324).
+    // ponytail: hide the indicator but keep the ruleset active.
     if (hideStatus) {
       return
     }

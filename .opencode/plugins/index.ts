@@ -120,7 +120,7 @@ interface CommandDefinition {
 
 function readMode(): string {
   try {
-    // review is a one-shot command, never a level (#736); an old saved review falls back.
+    // review is a one-shot command, never a level; an old saved review falls back.
     return normalizeMode(fs.readFileSync(statePath, 'utf8')) || getDefaultMode()
   } catch {
     return getDefaultMode()
@@ -158,7 +158,7 @@ function persistMode(args: string | undefined): void {
     }
     return
   }
-  // Bare /ponytail switches ponytail on, or keeps the level when it already is (#639).
+  // Bare /ponytail switches ponytail on, or keeps the level when it already is.
   if (!wanted && readMode() !== 'off') {
     return
   }

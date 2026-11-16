@@ -43,13 +43,13 @@ delete process.env.PONYTAIL_SUBAGENT_MATCHER
 // A shell default level would override the levels each case sets up.
 delete process.env.PONYTAIL_DEFAULT_MODE
 delete process.env.QODER_SESSION_ID
-// A leaked project dir would move the flag into ponytail-modes/ (#662).
+// A leaked project dir would move the flag into ponytail-modes/.
 delete process.env.CLAUDE_PROJECT_DIR
 // Cursor sets these only for hook processes, but a suite launched from a Cursor
-// hook would otherwise steer every case into the Cursor JSON branch (#817).
+// hook would otherwise steer every case into the Cursor JSON branch.
 delete process.env.CURSOR_VERSION
 delete process.env.CURSOR_PROJECT_DIR
-// Same for CodeBuddy (#854), which sets these only for its plugin hook processes.
+// Same for CodeBuddy, which sets these only for its plugin hook processes.
 delete process.env.CODEBUDDY_PLUGIN_ROOT
 delete process.env.CODEBUDDY_CONFIG_DIR
 
@@ -72,7 +72,7 @@ const codexState = path.join(pluginData, '.ponytail-active')
 const copilotData = path.join(temp, 'copilot-data')
 const codexData = path.join(temp, 'codex-data-shadow')
 
-// isShellSafe gates the Cursor hook command (issue #200): ordinary install
+// isShellSafe gates the Cursor hook command: ordinary install
 // paths pass, paths carrying shell metacharacters are rejected so they never get
 // embedded in a shell command.
 test('isShellSafe accepts ordinary install paths and rejects shell metacharacters', () => {
@@ -163,13 +163,13 @@ function runShell(command: string, env: Env, input = '') {
 }
 
 // These run the manifest commands through /bin/sh, which native Windows lacks
-// (#774); skip them there so the rest of this file still runs.
+// Skip them there so the rest of this file still runs.
 test.skipIf(!fs.existsSync('/bin/sh'))('manifest hook commands run clean through /bin/sh', () => {
   // The shared Claude/Codex command must stay guard-free: VS Code runs it in
   // Windows PowerShell, which cannot parse `||` (see hooks-windows.test.ts), so
   // it only has to run clean with node.
   // WSL2 can hand hooks a backslashed root (\home\user\...); the commands turn it
-  // back into a POSIX path, so both shapes must load the script (#646).
+  // back into a POSIX path, so both shapes must load the script.
   const roots = [root, root.split(path.sep).join('\\')]
 
   for (const command of collectManifestCommands('hooks/claude-codex-hooks.json', 'command')) {
@@ -185,7 +185,7 @@ test.skipIf(!fs.existsSync('/bin/sh'))('manifest hook commands run clean through
     }
   }
 
-  // Copilot CLI has a separate bash field, so it can exit 0 without node (#645).
+  // Copilot CLI has a separate bash field, so it can exit 0 without node.
   // `|| exit 0` also hides a broken hook, so the with-node run must leave stderr empty.
   for (const command of collectManifestCommands('hooks/copilot-hooks.json', 'bash')) {
     for (const pluginRoot of roots) {
@@ -304,7 +304,7 @@ test('native Claude keeps its flag under ~/.claude', () => {
   assert.equal(fs.readFileSync(path.join(home, '.claude', '.ponytail-active'), 'utf8'), 'full')
 })
 
-// CLAUDE_CONFIG_DIR overrides ~/.claude for the flag file (issue #34).
+// CLAUDE_CONFIG_DIR overrides ~/.claude for the flag file.
 test('CLAUDE_CONFIG_DIR relocates the flag file', () => {
   const home2 = path.join(temp, 'home2')
   fs.mkdirSync(home2, { recursive: true })
@@ -345,7 +345,7 @@ test('Copilot activation writes its own data dir and emits additionalContext', (
 
 // VS Code Copilot never sets COPILOT_PLUGIN_DATA — it only injects
 // CLAUDE_PLUGIN_ROOT pointed at an agent-plugins/.../.vscode install path
-// (#528). Without a fallback, isCopilot was false, so ponytail assumed
+// Without a fallback, isCopilot was false, so ponytail assumed
 // native Claude Code.
 test('VS Code Copilot falls back to the Claude state dir', () => {
   const vscodeHome = path.join(temp, 'vscode-copilot-home')
@@ -399,7 +399,7 @@ test('Copilot mode tracker leaves codex PLUGIN_DATA untouched', () => {
 })
 
 // SubagentStart hook: when ponytail mode is active it injects the ruleset into
-// each subagent (issue #252). Native Claude must get the hookSpecificOutput JSON
+// each subagent. Native Claude must get the hookSpecificOutput JSON
 // form, not raw stdout, or the context is dropped.
 test('SubagentStart injects into subagents on Claude and Codex and stays silent when off', () => {
   const subHome = path.join(temp, 'sub-home')
@@ -427,7 +427,7 @@ test('SubagentStart injects into subagents on Claude and Codex and stays silent 
   assert.equal(result.stdout, '', 'SubagentStart must stay silent when ponytail is off')
 
   // Codex shares claude-codex-hooks.json, so SubagentStart is reachable under Codex
-  // too — assert the codex branch emits hookSpecificOutput and no systemMessage (#605).
+  // too — assert the codex branch emits hookSpecificOutput and no systemMessage.
   const subCodex = path.join(temp, 'sub-codex')
   fs.mkdirSync(subCodex, { recursive: true })
   fs.writeFileSync(path.join(subCodex, '.ponytail-active'), 'full')
@@ -448,7 +448,7 @@ test('SubagentStart injects into subagents on Claude and Codex and stays silent 
   assert.match(output.hookSpecificOutput.additionalContext, /PONYTAIL MODE ACTIVE — level: full/)
 })
 
-// SubagentStart scoping (issue #506): PONYTAIL_SUBAGENT_MATCHER limits the
+// SubagentStart scoping: PONYTAIL_SUBAGENT_MATCHER limits the
 // injection to agent types whose name matches the regex. Unset keeps the
 // inject-into-every-subagent behavior asserted above. The matcher is
 // case-insensitive and unanchored, and every uncertain case fails open.
@@ -489,7 +489,7 @@ test('SubagentStart matcher scopes injection and fails open', () => {
   assert.equal(result.stdout, '', 'an anchored matcher must not match a superset agent_type')
 
   // Matcher set but agent_type absent → the platform didn't report it; fail
-  // open and inject rather than silently dropping the persona (issue #252).
+  // open and inject rather than silently dropping the persona.
   result = run(
     'ponytail-subagent.ts',
     { ...scopeEnv, PONYTAIL_SUBAGENT_MATCHER: 'general' },
@@ -509,7 +509,7 @@ test('SubagentStart matcher scopes injection and fails open', () => {
   output = JSON.parse(result.stdout)
   assert.equal(output.hookSpecificOutput.hookEventName, 'SubagentStart')
 
-  // Catastrophic-backtracking matcher → must not hang the hook (#658); the
+  // Catastrophic-backtracking matcher → must not hang the hook; the
   // match is time-boxed and a timeout fails open and injects.
   result = run(
     'ponytail-subagent.ts',
@@ -521,8 +521,8 @@ test('SubagentStart matcher scopes injection and fails open', () => {
   assert.match(output.hookSpecificOutput.additionalContext, /PONYTAIL MODE ACTIVE — level: full/)
 
   // The default (no matcher) path must not depend on stdin: even with stdin
-  // closed empty it injects synchronously, preserving the #252 behavior on
-  // Windows where the piped JSON can be swallowed (#443).
+  // closed empty it injects synchronously, preserving injection on
+  // Windows where the piped JSON can be swallowed.
   result = run('ponytail-subagent.ts', scopeEnv, '')
   assert.equal(result.status, 0, result.stderr)
   output = JSON.parse(result.stdout)
@@ -658,7 +658,7 @@ test('Qoder tracker initializes, switches, persists off and injects subagents', 
   assert.match(output.hookSpecificOutput.additionalContext, /PONYTAIL MODE ACTIVE — level: full/)
 })
 
-// CodeBuddy (#854): installs the Claude-format plugin as-is and runs its hooks
+// CodeBuddy: installs the Claude-format plugin as-is and runs its hooks
 // with CODEBUDDY_PLUGIN_ROOT set. The mode flag must live in ~/.codebuddy, not
 // ~/.claude, so a CodeBuddy session can't flip a Claude Code session's mode,
 // and output is hookSpecificOutput JSON.
@@ -707,7 +707,7 @@ test('CodeBuddy keeps its flag in ~/.codebuddy', () => {
   assert.equal(fs.readFileSync(path.join(codebuddyConfigDir, '.ponytail-active'), 'utf8'), 'lite')
 })
 
-// writeDefaultMode must merge into existing config, not overwrite it (#490).
+// writeDefaultMode must merge into existing config, not overwrite it.
 test('writeDefaultMode merges into existing config', () => {
   const mergeHome = path.join(temp, 'merge-home')
   const mergeConfigDir = path.join(mergeHome, '.config', 'ponytail')
@@ -734,7 +734,7 @@ test('writeDefaultMode merges into existing config', () => {
   }
 })
 
-// #329: `/ponytail default <mode>` persists the default to config (survives
+// `/ponytail default <mode>` persists the default to config (survives
 // restart), while a plain switch stays session-scoped and never touches config.
 test('/ponytail default persists while plain switches stay session-scoped', () => {
   const defHome = path.join(temp, 'default-cmd-home')
@@ -780,7 +780,7 @@ test('/ponytail default persists while plain switches stay session-scoped', () =
     'invalid mode must preserve the active session mode',
   )
 
-  // review is not a valid default (#377) — the command is ignored, config unchanged.
+  // review is not a valid default — the command is ignored, config unchanged.
   result = run(
     'ponytail-mode-tracker.ts',
     defEnv,
@@ -815,7 +815,7 @@ test('/ponytail default leaves an unparseable config untouched and says so', () 
 })
 
 // review must be refused as a default by the config functions too, not only the
-// mode-tracker command path (#377): writing it is a no-op, and a stray
+// mode-tracker command path: writing it is a no-op, and a stray
 // PONYTAIL_DEFAULT_MODE=review falls back to the built-in default.
 test('review is refused as a default by the config functions', () => {
   const revHome = path.join(temp, 'review-default-home')
@@ -874,8 +874,8 @@ test('normal EOF path stays fast', () => {
   )
 })
 
-// #790: when stdin never emits 'end' (the Windows PowerShell wrapper can
-// swallow the piped JSON, #443), the hook must still exit on its own via the
+// When stdin never emits 'end' (the Windows PowerShell wrapper can
+// swallow the piped JSON), the hook must still exit on its own via the
 // 1000ms fallback timer — not hang until the host's external watchdog kills
 // it. An unref'd timer never fired in that state on Windows (a ref'd stdin
 // keeps the loop alive and the unref'd timer is never scheduled), so the
@@ -911,7 +911,7 @@ test("hooks exit on the stdin fallback timer and keep it ref'd", () => {
   }
 })
 
-// #736: /ponytail-review is a one-shot skill, not a session level. Persisting
+// /ponytail-review is a one-shot skill, not a session level. Persisting
 // `review` makes every later getPonytailInstructions() return a pointer line.
 test('/ponytail-review never latches a session level', () => {
   const latchHome = path.join(temp, 'review-latch-home')
@@ -1008,7 +1008,7 @@ test('per-project mode flags stay independent', () => {
   assert.equal(subagentLevel(siblingEnv), 'lite')
 })
 
-// #639: bare /ponytail switches ponytail on when it is off, and only reports
+// Bare /ponytail switches ponytail on when it is off, and only reports
 // (never resets) the level when it is already on.
 test('bare /ponytail switches on when off and only reports when on', () => {
   const bareHome = path.join(temp, 'bare-home')
