@@ -76,6 +76,7 @@ Start with `What this repo does:` in two or three sentences, and the load
 you assumed.
 
 Then the findings in three groups, most important first, skip empty groups:
+
 - **Must fix:** bug, security, data loss, breaks at the expected load.
 - **Should fix:** risky code without a test, real slowness, duplication, a
   function that mixes jobs, code that should not exist.
@@ -85,7 +86,7 @@ Number findings across all groups, so the user can say "fix 2 and 5". At
 most 20 findings; if you left smaller ones out, say how many.
 Every finding has all four parts, each one or two short sentences:
 
-2. **Orders land on the wrong day** (`billing/close_day.py:L40-52`)
+1. **Orders land on the wrong day** (`file.ts:L40-52`)
    - **What this is:** At midnight this job closes the day and bills all orders of that day.
    - **Problem:** It takes "today" from the server clock, which runs in UTC. An order placed
      at 00:30 in Berlin is billed on the day before.
@@ -94,6 +95,7 @@ Every finding has all four parts, each one or two short sentences:
    - **If we skip it:** Late orders show the wrong date, and accounting fixes them by hand.
 
 End with:
+
 - `Verdict:` one line: healthy, or what to fix first.
 - `Lean: -<N> lines, -<M> dependencies possible.` when lean findings exist.
 - `Not checked:` the parts you did not read or could not run.
