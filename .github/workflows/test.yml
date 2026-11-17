@@ -21,6 +21,8 @@ jobs:
         with:
           persist-credentials: false
       - uses: Rethunk-Tech/gh-actions/setup-bun@8b1855d0694508efbf7b94b1628a61e447da80f9 # v1.28
+        with:
+          run-audit: "true"
       # Same target as the local gate and lefthook's pre-push, so CI cannot drift from them.
       # tests/hermes-plugin.test.ts runs the Hermes plugin under the runner's python3.
       - run: bun run ci

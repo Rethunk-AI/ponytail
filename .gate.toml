@@ -1,0 +1,2 @@
+[gates.vuln]
+run = "bun audit"
