@@ -1,2 +1,3 @@
 [gates.vuln]
-run = "bun audit"
+# Fails only on advisories with a shipped fix, like CI's run-audit; CI runs that step itself.
+run = '[ -n "$CI" ] || bun /usr/local/src/com.github/Rethunk-Tech/gh-actions/audit-bun/audit.ts'
