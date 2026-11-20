@@ -413,6 +413,8 @@ test('SubagentStart injects into subagents on Claude and Codex and stays silent 
   let output: HookOutput = JSON.parse(result.stdout)
   assert.equal(output.hookSpecificOutput.hookEventName, 'SubagentStart')
   assert.match(output.hookSpecificOutput.additionalContext, /PONYTAIL MODE ACTIVE — level: full/)
+  // A subagent's brief carries its rules: the ruleset rides along as one line, not the full block.
+  assert.ok(output.hookSpecificOutput.additionalContext.length < 400)
 
   // Ultra stays in the main thread: subagents get full.
   fs.writeFileSync(subFlag, 'ultra')

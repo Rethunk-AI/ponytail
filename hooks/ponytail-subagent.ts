@@ -2,7 +2,7 @@
 //
 // SessionStart context is parent-thread only and never reaches subagents, so
 // without this every Task-spawned agent runs ponytail-unaware.
-// When ponytail mode is active, inject the same ruleset into each subagent.
+// When ponytail mode is active, each subagent gets the ruleset as one line: its brief carries the rest.
 //
 // Scoping (opt-in): set PONYTAIL_SUBAGENT_MATCHER to a regex and
 // the ruleset is injected only into subagents whose agent_type matches. The
@@ -11,7 +11,6 @@
 
 import vm from 'node:vm'
 import { getPonytailSubagentMatcher } from './ponytail-env.ts'
-import { getPonytailInstructions } from './ponytail-instructions.ts'
 import { readMode, STDIN_FALLBACK_MS, writeHookOutput } from './ponytail-runtime.ts'
 
 const BOM_RE = /^\uFEFF/
@@ -29,9 +28,12 @@ if (!mode || mode === 'off') {
 // Ultra pushes back before building; a subagent cannot ask anyone, so it builds its brief at full.
 const activeMode: string = mode === 'ultra' ? 'full' : mode
 
+const subagentLine = (level: string) =>
+  `PONYTAIL MODE ACTIVE — level: ${level}. Make the smallest complete change your brief asks for: reuse what exists, add no feature, option or abstraction nobody asked for, and keep the validation, error handling and tests the change needs.`
+
 function inject(): void {
   try {
-    writeHookOutput('SubagentStart', activeMode, getPonytailInstructions(activeMode))
+    writeHookOutput('SubagentStart', activeMode, subagentLine(activeMode))
   } catch {
     // Silent fail — a stdout error at hook exit must not surface as a hook failure.
   }
