@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: Rethunk-Tech/gh-actions/setup-bun@51f24ff8bb3790ff85c2032513e9c075cca519aa # v1.34
+      - uses: Rethunk-Tech/gh-actions/setup-bun@ccefaa382bdec16329d8fcff4f506b3d75ee7cba # v1.35
         with:
           run-audit: "true"
       # Same target as the local gate and lefthook's pre-push, so CI cannot drift from them.
