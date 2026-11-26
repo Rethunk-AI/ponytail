@@ -104,6 +104,8 @@
         // canon ts-biome-00035
         "noContinue": "off",
         // canon ts-biome-00035
+        "noMagicNumbers": "off",
+        // canon ts-biome-00035
         "noTernary": "off",
         // canon ts-biome-00035
         "useExportsLast": "off",
@@ -207,7 +209,9 @@
         // canon ts-biome-00037
         "useBaseline": "off",
         // canon ts-biome-00038
-        "noLoopFunc": "off"
+        "noLoopFunc": "off",
+        // canon ts-biome-00035
+        "noBitwiseOperators": "off"
       },
 
       // canon ts-biome-00013 — an unhandled promise is a silent failure, not a style issue.
