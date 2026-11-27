@@ -118,11 +118,11 @@ export function resolveSessionMode(entries: unknown, fallbackMode: unknown = DEF
 
   for (let i = entries.length - 1; i >= 0; i -= 1) {
     const entry: SessionEntry | undefined = entries[i]
-    if (entry?.type !== 'custom' || entry?.customType !== 'ponytail-mode') {
+    if (entry?.type !== 'custom' || entry.customType !== 'ponytail-mode') {
       continue
     }
 
-    const mode = normalizeMode(entry?.data?.mode)
+    const mode = normalizeMode(entry.data?.mode)
     if (mode) {
       return mode
     }
